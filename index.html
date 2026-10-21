@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>複線図クエスト</title>
+<meta name="theme-color" content="#0b1220">
+<meta name="description" content="第二種電気工事士 技能試験の複線図を、ゲーム感覚で練習できるアプリ">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="複線図クエスト">
+<style>
+:root{--bg:#0b1220;--panel:#131c31;--panel2:#1b2742;--line:#2b3a5a;--text:#e5ecf6;--muted:#93a4c3;--accent:#3b82f6;--gold:#facc15;--ok:#22c55e;--ng:#ef4444;}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:'Hiragino Kaku Gothic ProN','Hiragino Sans','Noto Sans JP','Yu Gothic UI','Meiryo',system-ui,-apple-system,sans-serif;}
+body{overflow:hidden;overscroll-behavior:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;cursor:pointer;border:none;color:inherit;touch-action:manipulation}
+.screen{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+.bar{padding-top:max(8px,env(safe-area-inset-top))!important}
+#home .home-inner{padding-top:max(28px,env(safe-area-inset-top));padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.stage-grid,.dojo-body{padding-bottom:max(18px,env(safe-area-inset-bottom))!important}
+.zoomctl{position:absolute;right:18px;top:18px;display:flex;flex-direction:column;gap:6px;z-index:5}
+.zoomctl button{width:40px;height:40px;border-radius:10px;background:rgba(15,23,42,.85);color:#fff;font-size:20px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.mbar{display:none}
+.sheet-close,.sheet-backdrop{display:none}
+.wmenu-colors{display:flex;gap:6px;margin-bottom:6px}
+.wmenu-colors button{flex:1;height:34px;border-radius:8px;border:2px solid #475569}
+.install-tip{font-size:12px;color:var(--muted);text-align:center;line-height:1.6}
+.hidden{display:none!important}
+.screen{display:none;position:fixed;inset:0;flex-direction:column}
+.screen.active{display:flex}
+.btn{padding:10px 16px;border-radius:10px;font-weight:700;color:#fff;background:#334155;border-bottom:3px solid rgba(0,0,0,.35);transition:transform .08s,filter .15s;font-size:14px}
+.btn:hover{filter:brightness(1.15)}
+.btn:active{transform:translateY(2px);border-bottom-width:1px}
+.btn.sm{padding:7px 11px;font-size:13px}
+.btn.big{padding:16px 22px;font-size:18px;width:100%}
+.btn.xl{padding:14px 18px;font-size:17px;width:100%}
+.btn.blue{background:#2563eb}.btn.green{background:#16a34a}.btn.gold{background:#d97706}.btn.red{background:#dc2626}.btn.purple{background:linear-gradient(135deg,#7c3aed,#2563eb)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.bar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:#0f172a;border-bottom:3px solid var(--accent);flex-wrap:wrap}
+.bar h2{margin:0;font-size:18px}
+.spacer{flex:1}
+.chip{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;white-space:nowrap}
+.chip small{color:var(--muted);margin-left:2px}
+
+/* HOME */
+#home{overflow-y:auto;background:radial-gradient(circle at 50% 0%,#1e3a8a 0%,#0b1220 60%)}
+.home-inner{max-width:520px;width:100%;margin:auto;padding:28px 18px;display:flex;flex-direction:column;gap:18px}
+.logo{text-align:center}
+.logo .bolt{font-size:56px;display:inline-block;animation:bolt 2s infinite;filter:drop-shadow(0 0 16px #facc15)}
+@keyframes bolt{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.12)}}
+.logo h1{margin:4px 0;font-size:38px;font-weight:900;letter-spacing:.08em;background:linear-gradient(90deg,#fde047,#60a5fa);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo p{margin:0;color:var(--muted);font-size:14px}
+.player-card{display:flex;align-items:center;gap:14px;background:rgba(19,28,49,.9);border:1px solid var(--line);border-radius:16px;padding:14px}
+.avatar{font-size:44px;background:#1e293b;border-radius:50%;width:66px;height:66px;display:flex;align-items:center;justify-content:center;border:2px solid var(--gold)}
+.pinfo{flex:1}
+.ptitle{font-weight:900;color:var(--gold);font-size:16px}
+.plv{font-size:13px;color:var(--muted)}
+.xpbar{height:10px;background:#0b1220;border-radius:99px;overflow:hidden;margin-top:6px;border:1px solid var(--line)}
+.xpbar div{height:100%;background:linear-gradient(90deg,#22c55e,#facc15);width:0;transition:width .6s}
+.xptext{font-size:11px;color:var(--muted);margin-top:3px}
+.pstars{font-size:20px;white-space:nowrap}
+.menu{display:flex;flex-direction:column;gap:12px}
+.menu .row{display:flex;gap:8px}
+.menu .row .btn{flex:1}
+
+/* SELECT */
+#select{background:var(--bg)}
+.stage-grid{flex:1;overflow-y:auto;padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;align-content:start}
+.scard{position:relative;text-align:left;background:linear-gradient(160deg,#1b2742,#131c31);border:2px solid var(--line);border-radius:16px;padding:14px;min-height:150px;transition:transform .15s,border-color .15s}
+.scard:hover{transform:translateY(-3px);border-color:var(--accent)}
+.scard.locked{opacity:.45;cursor:not-allowed}
+.scard.locked:hover{transform:none;border-color:var(--line)}
+.sno{font-size:11px;font-weight:900;color:#60a5fa;letter-spacing:.1em}
+.sname{font-size:18px;font-weight:900;margin:3px 0}
+.ssub{font-size:12.5px;color:var(--muted)}
+.stag{display:inline-block;margin-top:8px;font-size:11px;background:#0b1220;border:1px solid var(--line);border-radius:6px;padding:2px 7px;color:#cbd5e1}
+.sstars{margin-top:8px;font-size:22px;letter-spacing:2px;color:#334155}
+.sstars .on{color:var(--gold);text-shadow:0 0 8px rgba(250,204,21,.6)}
+.sbest{position:absolute;right:12px;bottom:12px;font-size:12px;color:var(--muted)}
+.lock{position:absolute;right:12px;top:10px;font-size:22px}
+
+/* GAME */
+.stitle{display:flex;align-items:center;gap:8px;font-size:16px}
+.stitle span{background:var(--accent);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:900}
+.gmain{flex:1;display:flex;min-height:0}
+.boardWrap{flex:1;position:relative;min-width:0;padding:10px}
+.boardWrap.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(4px,-1px)}}
+svg#board{width:100%;height:100%;background:#e9eef5;border-radius:14px;display:block;touch-action:none;user-select:none;box-shadow:inset 0 0 0 2px #cbd5e1}
+#shortBanner{position:absolute;top:22px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;font-weight:900;padding:8px 18px;border-radius:10px;box-shadow:0 0 24px rgba(239,68,68,.8);animation:blinkB .4s infinite;pointer-events:none;display:none;white-space:nowrap}
+@keyframes blinkB{50%{background:#7f1d1d}}
+.board-tip{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,.88);color:#fff;font-size:13px;padding:6px 14px;border-radius:99px;pointer-events:none;white-space:nowrap}
+.side{width:340px;background:#111a2e;border-left:1px solid var(--line);overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.sec-t{font-weight:900;font-size:13px;margin:8px 0 6px;color:#bfdbfe}
+.sec-t small{color:var(--muted);font-weight:400}
+.oyakata{display:flex;gap:8px;align-items:flex-start}
+.oyakata span{font-size:30px}
+.oyakata p{margin:0;background:#fff;color:#1e293b;border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.55;position:relative;font-weight:700}
+.expect{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.expect li{display:flex;align-items:center;gap:8px;background:#0f172a;border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.expect li.ok{border-color:#166534}.expect li.ng{border-color:#7f1d1d}
+.expect .bulb{font-size:20px;filter:grayscale(1) opacity(.5)}
+.expect .bulb.on{filter:drop-shadow(0 0 6px #facc15)}
+.expect div{flex:1;display:flex;flex-direction:column}
+.expect b{font-size:13px}.expect small{font-size:11.5px;color:var(--muted)}
+.expect .st{font-size:11px;font-weight:700;white-space:nowrap}
+.expect li.ok .st{color:#4ade80}.expect li.ng .st{color:#f87171}
+.conds{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.conds span{font-size:11px;background:#0b1220;border:1px solid var(--line);border-radius:6px;padding:3px 7px}
+.conds span.warn{border-color:#d97706;color:#fbbf24;font-weight:700}
+.colors{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.cbtn{display:flex;flex-direction:column;align-items:center;gap:4px;background:#0f172a;border:2px solid var(--line);border-radius:10px;padding:7px 2px;font-size:12px;font-weight:700}
+.cbtn i{width:30px;height:9px;border-radius:5px;border:1px solid #64748b}
+.cbtn.active{border-color:var(--gold);box-shadow:0 0 10px rgba(250,204,21,.45)}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.hintbox{grid-column:1/-1;background:#422006;border:1px solid #a16207;border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.6;color:#fde68a}
+.hintbox ol{margin:0;padding-left:18px}
+.ops{font-size:11px;color:var(--muted);line-height:1.6}
+.picker{position:absolute;z-index:40;background:#0f172a;border:2px solid var(--accent);border-radius:12px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.5);min-width:170px}
+.picker .pt{font-size:11.5px;color:#bfdbfe;font-weight:700;margin-bottom:6px}
+.picker .prow{display:flex;gap:5px;margin-bottom:6px}
+.picker .prow button{flex:1;background:#1e293b;border:2px solid var(--line);border-radius:8px;padding:8px 4px;font-weight:900;font-size:16px}
+.picker .prow button:hover{border-color:var(--accent)}
+.picker .prow button.sel{background:#2563eb;border-color:#93c5fd}
+.picker .pdel{width:100%;background:#7f1d1d;border-radius:8px;padding:6px;font-size:12px;font-weight:700}
+
+/* SVG */
+#board .dev-body{fill:#fff;stroke:#334155;stroke-width:2.5}
+#board .dev-stripe{fill:#475569}
+#board .dev.power .dev-stripe{fill:#b91c1c}
+#board .dev.switch .dev-stripe{fill:#16a34a}
+#board .dev.load .dev-stripe{fill:#a21caf}
+#board .dev.outlet .dev-stripe{fill:#0369a1}
+#board .dev.switch{cursor:pointer}
+#board .dev.switch:hover .dev-body{fill:#f0fdf4;stroke:#16a34a}
+#board .icon-c{fill:#f1f5f9;stroke:#94a3b8;stroke-width:2}
+#board .dev.lit .icon-c{fill:#fde047;stroke:#eab308}
+#board .dev.lit .dev-body{stroke:#eab308;fill:#fffbeb}
+#board .icon-t{font-size:15px;text-anchor:middle;font-weight:900;fill:#334155;pointer-events:none}
+#board .dev-name{font-size:12.5px;font-weight:700;text-anchor:middle;fill:#1e293b;pointer-events:none}
+#board .sw-plate{fill:#f8fafc;stroke:#64748b;stroke-width:2}
+#board .sw-knob{fill:#94a3b8;transition:y .15s}
+#board .sw-knob.on{fill:#22c55e}
+#board .sw-state{font-size:11px;font-weight:900;fill:#475569;pointer-events:none}
+#board .pin{fill:#fff;stroke:#475569;stroke-width:2.5;cursor:crosshair}
+#board .pin.used{fill:#cbd5e1}
+#board .pin:hover{fill:#3b82f6;stroke:#1d4ed8}
+#board .hit{fill:transparent;stroke:none;cursor:crosshair}
+#board .pin.target{fill:#3b82f6;stroke:#1d4ed8}
+#board.wiring .pin{animation:pinPulse 1s infinite}
+#board .pin.start{fill:#f59e0b;stroke:#b45309;animation:none}
+#board .pin-l{font-size:11px;font-weight:900;fill:#334155;pointer-events:none}
+#board .box{fill:rgba(255,255,255,.6);stroke:#64748b;stroke-width:3;stroke-dasharray:12 8;cursor:copy}
+#board .box.outletbox{stroke:#0f766e;fill:rgba(240,253,250,.7)}
+#board .box-t{font-size:12px;font-weight:700;fill:#64748b;pointer-events:none}
+#board .grp{fill:rgba(22,163,74,.06);stroke:#16a34a;stroke-width:2;stroke-dasharray:4 4;pointer-events:none}
+#board .grp-t{font-size:11px;fill:#15803d;font-weight:700;pointer-events:none}
+#board .wire{fill:none;stroke-width:5;stroke-linecap:round;pointer-events:none}
+#board .wire.thick{stroke-width:8}
+#board .w-black{stroke:#111827}#board .w-white{stroke:#fff}#board .w-red{stroke:#ef4444}#board .w-green{stroke:#16a34a}
+#board .wire.w-outline{stroke:#64748b;stroke-width:8}
+#board .wire.w-outline.thick{stroke-width:11}
+#board .wire.flow{stroke:#facc15;stroke-width:2.5;stroke-dasharray:6 10;animation:flow .5s linear infinite}
+#board .wire.shortw{stroke:#ef4444;stroke-width:10;opacity:.6;animation:blink .25s infinite}
+#board .wire-hit{fill:none;stroke:transparent;stroke-width:16;cursor:pointer;pointer-events:stroke}
+#board .wg:hover .wire.w-black,#board .wg:hover .wire.w-red,#board .wg:hover .wire.w-green,#board .wg:hover .wire.w-outline{filter:drop-shadow(0 0 5px rgba(239,68,68,.95))}
+#board .temp{opacity:.65;stroke-dasharray:8 6}
+#board .temp.w-white{stroke:#94a3b8}
+#board .junc{cursor:crosshair}
+#board .junc .jc{fill:#fff;stroke:#2563eb;stroke-width:3}
+#board .junc.insert .jc{stroke:#059669}
+#board .junc:hover .jc{fill:#dbeafe}
+#board .junc text{font-size:12px;font-weight:900;text-anchor:middle;fill:#1e3a8a;pointer-events:none}
+#board .jtag{cursor:pointer}
+#board .jtag rect{fill:#1e293b}
+#board .jtag text{fill:#fff;font-size:12px;font-weight:900;text-anchor:middle;pointer-events:none}
+#board .jtag.unset rect{fill:#ef4444;animation:blink 1s infinite}
+#board .spark{fill:#facc15;pointer-events:none;animation:spark .45s ease-out forwards}
+@keyframes spark{from{r:4;opacity:1}to{r:28;opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-16}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes pinPulse{50%{stroke:#3b82f6;stroke-width:4}}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(2,6,23,.72);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:center;justify-content:center;padding:14px}
+.mbox{background:#111a2e;border:1px solid var(--line);border-radius:18px;max-width:640px;width:100%;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.mhead{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#111a2e;z-index:2}
+.mhead h3{margin:0}
+.mclose{background:none;font-size:26px;color:var(--muted)}
+.mbody{padding:16px 18px;font-size:14px;line-height:1.7}
+.mbody h4{margin:14px 0 6px;color:#bfdbfe}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:6px 8px;text-align:center}
+.tbl th{background:#1b2742}
+.mk{display:inline-block;min-width:28px;font-weight:900;color:var(--gold)}
+.res-head{text-align:center;padding:20px 16px 10px}
+.res-stamp{display:inline-block;font-size:30px;font-weight:900;border:5px solid;border-radius:12px;padding:2px 18px;transform:rotate(-6deg);animation:stamp .5s cubic-bezier(.2,2,.4,1)}
+.res-head.ok .res-stamp{color:#22c55e;border-color:#22c55e}
+.res-head.ng .res-stamp{color:#ef4444;border-color:#ef4444}
+@keyframes stamp{from{transform:scale(3) rotate(-6deg);opacity:0}}
+.res-stars{font-size:46px;letter-spacing:6px;margin-top:6px}
+.star{color:#334155;display:inline-block}
+.star.on{color:var(--gold);text-shadow:0 0 14px rgba(250,204,21,.8);animation:starPop .5s backwards}
+@keyframes starPop{from{transform:scale(0) rotate(-90deg)}70%{transform:scale(1.4)}}
+.res-score{font-size:20px}.res-score b{font-size:44px;color:var(--gold)}
+.res-comment{margin-top:6px;background:#fff;color:#1e293b;border-radius:10px;padding:8px 12px;font-weight:700;display:inline-block}
+.cats{display:flex;flex-direction:column;gap:6px;margin:6px 0 10px}
+.cat{display:grid;grid-template-columns:96px 1fr 56px;align-items:center;gap:8px;font-size:13px}
+.cbar{height:10px;background:#0b1220;border-radius:99px;overflow:hidden}
+.cbar div{height:100%;background:linear-gradient(90deg,#3b82f6,#22c55e)}
+.issue{background:#1b2742;border-left:4px solid var(--ng);border-radius:8px;padding:7px 10px;margin:6px 0;font-size:13px}
+.issue small{display:block;color:var(--muted);margin-top:2px}
+.issue.f{border-left-color:#f97316}
+.warnbox{background:#422006;border:1px solid #a16207;color:#fde68a;border-radius:10px;padding:8px 10px;font-size:12.5px;margin:8px 0}
+.pointbox{background:#0c2a4a;border:1px solid #1d4ed8;border-radius:12px;padding:10px 12px;white-space:pre-wrap;font-size:13px;line-height:1.7}
+.res-btns{display:flex;gap:8px;flex-wrap:wrap;padding:0 18px 18px}
+.res-btns .btn{flex:1;min-width:120px}
+.ok-t{color:#4ade80;font-weight:900}.ng-t{color:#f87171;font-weight:900}
+.xpgain{text-align:center;color:#4ade80;font-weight:900;font-size:18px;margin:8px 0}
+
+/* DOJO */
+#dojo{background:radial-gradient(circle at 50% 10%,#422006,#0b1220 65%)}
+.dojo-body{flex:1;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+.dcard{background:rgba(19,28,49,.95);border:1px solid var(--line);border-radius:20px;padding:22px;max-width:520px;width:100%;text-align:center}
+.dcard h3{margin-top:0;font-size:22px}
+.dcard p{line-height:1.8;color:#cbd5e1}
+.dhud{display:flex;justify-content:space-between;font-size:15px;margin-bottom:6px}
+.dhud b{color:var(--gold);font-size:20px}
+.dtimebar{height:8px;background:#0b1220;border-radius:99px;overflow:hidden;margin-bottom:16px}
+.dtimebar div{height:100%;background:linear-gradient(90deg,#ef4444,#facc15);transition:width .3s}
+.dq{min-height:150px}
+.dwires{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:10px 0 14px}
+.cw{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fdba74,#c2410c);border:5px solid #e5e7eb;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 2px #000;animation:pop .25s backwards}
+.cw.big{width:60px;height:60px;border-width:6px;font-size:13px}
+@keyframes pop{from{transform:scale(0)}}
+.dtext{font-size:20px;font-weight:900}
+.dask{color:var(--muted);margin-top:4px}
+.dans{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.dbtn{background:linear-gradient(160deg,#334155,#1e293b);border:3px solid #475569;border-radius:16px;font-size:34px;font-weight:900;padding:14px 0;color:var(--gold);transition:transform .08s}
+.dbtn:hover{border-color:var(--gold)}
+.dbtn:active{transform:scale(.95)}
+.dfb{min-height:46px;margin-top:12px;font-weight:700}
+.dfb.good{color:#4ade80}.dfb.bad{color:#f87171}
+
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.tmsg{background:#16a34a;color:#fff;font-weight:700;padding:8px 16px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.4);animation:tin .25s;font-size:14px}
+.tmsg.err{background:#dc2626}
+.tmsg.lv{background:linear-gradient(90deg,#d97706,#facc15);color:#1e293b;font-size:18px}
+@keyframes tin{from{transform:translateY(-12px);opacity:0}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:300}
+
+/* ===== スマホ ===== */
+@media (max-width:900px), (max-height:520px){
+  .bar{gap:6px;padding:6px 8px}
+  .bar h2{font-size:16px}
+  #game .bar .chip small{display:none}
+  #game .bar .chip{padding:4px 9px;font-size:12px}
+  .stitle{font-size:14px}
+  .gmain{flex-direction:column;position:relative}
+  .boardWrap{flex:1;min-height:0;padding:6px}
+  .zoomctl{right:12px;top:12px}
+  .board-tip{top:12px;bottom:auto;left:12px;transform:none;font-size:11px;white-space:normal;max-width:calc(100% - 80px);padding:5px 10px;border-radius:10px}
+  #shortBanner{top:auto;bottom:16px;font-size:13px}
+  .side{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:78vh;z-index:60;border-left:0;border-top:2px solid var(--accent);border-radius:20px 20px 0 0;transform:translateY(105%);transition:transform .25s ease;padding:12px 12px max(16px,env(safe-area-inset-bottom));box-shadow:0 -10px 40px rgba(0,0,0,.5)}
+  .side.open{transform:none}
+  .side .ops{display:none}
+  .sheet-close{display:block;width:100%;background:#334155;border-radius:10px;padding:10px;font-weight:700}
+  .sheet-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:55}
+  .sheet-backdrop.open{display:block}
+  .mbar{display:flex;align-items:center;gap:6px;padding:8px 8px max(8px,env(safe-area-inset-bottom));background:#0f172a;border-top:1px solid var(--line)}
+  .mbar .mc{width:34px;height:34px;border-radius:50%;border:3px solid #475569;flex:none;padding:0}
+  .mbar .mc.active{border-color:var(--gold);box-shadow:0 0 0 2px rgba(250,204,21,.4);transform:scale(1.1)}
+  .mbar .mb{flex:1;min-width:0;height:42px;border-radius:10px;background:#334155;font-weight:700;font-size:13px;color:#fff;white-space:nowrap}
+  .mbar .mb.judge{flex:1.4;background:linear-gradient(135deg,#7c3aed,#2563eb)}
+  .mbar .mb.mission{background:#1e40af}
+  .res-btns .btn{min-width:46%}
+  .dbtn{font-size:30px}
+}
+@media (max-width:380px){ .mbar .mc{width:30px;height:30px} .mbar .mb{font-size:12px} }
+</style>
+</head>
+<body>
+
+<!-- ===== HOME ===== -->
+<section id="home" class="screen active">
+  <div class="home-inner">
+    <div class="logo">
+      <span class="bolt">⚡</span>
+      <h1>複線図クエスト</h1>
+      <p>第二種電気工事士 技能試験 ― 遊んで身につく配線設計</p>
+    </div>
+    <div class="player-card">
+      <div class="avatar">👷</div>
+      <div class="pinfo">
+        <div class="ptitle" id="hTitle"></div>
+        <div class="plv">Lv.<b id="hLv"></b></div>
+        <div class="xpbar"><div id="hXp"></div></div>
+        <div class="xptext" id="hXpText"></div>
+      </div>
+      <div class="pstars">⭐ <b id="hStars">0</b></div>
+    </div>
+    <div class="menu">
+      <button class="btn blue big" data-go="select">🗺 ステージに挑戦</button>
+      <button class="btn gold big" data-go="dojo">🥋 圧着マーク道場</button>
+      <div class="row">
+        <button class="btn ghost" data-modal="howto">📖 遊び方</button>
+        <button class="btn ghost" data-modal="rules">📘 早見表</button>
+        <button class="btn ghost" id="muteBtn">🔊 音あり</button>
+      </div>
+      <button class="btn green big hidden" id="installBtn">📲 ホーム画面に追加（アプリ化）</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== STAGE SELECT ===== -->
+<section id="select" class="screen">
+  <div class="bar"><button class="btn ghost sm" data-go="home">← ホーム</button><h2>ステージ選択</h2><div class="spacer"></div><div class="chip">⭐ <b id="sStars">0</b> / <span id="sStarsMax"></span></div></div>
+  <div class="stage-grid" id="stageGrid"></div>
+</section>
+
+<!-- ===== GAME ===== -->
+<section id="game" class="screen">
+  <div class="bar">
+    <button class="btn ghost sm" id="gBack">← ステージ</button>
+    <div class="stitle"><span id="gNo"></span><b id="gTitle"></b></div>
+    <div class="spacer"></div>
+    <div class="chip">⏱ <b id="gTime">0:00</b><small>/目標 <span id="gPar"></span></small></div>
+    <div class="chip">🔌 電線 <b id="gWires">0</b><small>本 / 目標 <span id="gOpt"></span>本</small></div>
+  </div>
+  <div class="gmain">
+    <div class="boardWrap" id="boardWrap">
+      <svg id="board" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="shortBanner">⚡ バチッ！ショート！ ブレーカーが落ちた ⚡</div>
+      <div id="picker" class="picker hidden"></div>
+      <div class="board-tip" id="boardTip">端子（○）をクリックして配線スタート</div>
+      <div class="zoomctl"><button id="zIn" title="拡大">＋</button><button id="zOut" title="縮小">－</button><button id="zFit" title="全体表示">⤢</button></div>
+    </div>
+    <div class="sheet-backdrop" id="sheetBackdrop"></div>
+    <aside class="side" id="side">
+      <div class="card">
+        <div class="oyakata"><span>👷</span><p id="gStory"></p></div>
+        <div class="sec-t">🎯 お題（スイッチを押して確かめよう）</div>
+        <ul id="gExpect" class="expect"></ul>
+        <div id="gCond" class="conds"></div>
+      </div>
+      <div class="card">
+        <div class="sec-t" style="margin-top:0">🎨 電線の色 <small>（キー 1〜4）</small></div>
+        <div class="colors">
+          <button class="cbtn active" data-color="black"><i style="background:#111827"></i>黒 1</button>
+          <button class="cbtn" data-color="white"><i style="background:#fff"></i>白 2</button>
+          <button class="cbtn" data-color="red"><i style="background:#ef4444"></i>赤 3</button>
+          <button class="cbtn" data-color="green"><i style="background:#16a34a"></i>緑 4</button>
+        </div>
+      </div>
+      <div class="card tools">
+        <button class="btn sm gold" id="hintBtn">💡 ヒント (−5点)</button>
+        <button class="btn sm" id="undoBtn">↶ 戻す</button>
+        <button class="btn sm" id="clearBtn">🧹 配線全消去</button>
+        <button class="btn sm" data-modal="rules">📘 早見表</button>
+        <div id="hintBox" class="hintbox hidden"></div>
+      </div>
+      <button class="btn purple xl" id="judgeBtn">🔍 検査を受ける</button>
+      <div class="ops">
+        ・端子（○）→ つなぎ先をクリックで配線<br>
+        ・ボックス内の空きをクリック → 接続点ができる<br>
+        ・接続点の「？」タグ → 圧着マーク／コネクタを選ぶ<br>
+        ・スイッチ本体クリック → ON/OFF（その場で点灯確認）<br>
+        ・電線クリック → 撤去／右クリック → 端子・接続点の線を外す<br>
+        ・Esc 配線取消／Ctrl+Z 戻す
+      </div>
+      <button class="sheet-close" id="sheetClose">▼ 閉じて配線にもどる</button>
+    </aside>
+  </div>
+  <div class="mbar">
+    <button class="mc cbtn active" data-color="black" style="background:#111827" aria-label="黒"></button>
+    <button class="mc cbtn" data-color="white" style="background:#fff" aria-label="白"></button>
+    <button class="mc cbtn" data-color="red" style="background:#ef4444" aria-label="赤"></button>
+    <button class="mc cbtn" data-color="green" style="background:#16a34a" aria-label="緑"></button>
+    <button class="mb" id="mUndo">↶</button>
+    <button class="mb mission" id="mMission">📋 お題</button>
+    <button class="mb judge" id="mJudge">🔍 検査</button>
+  </div>
+</section>
+
+<!-- ===== DOJO ===== -->
+<section id="dojo" class="screen">
+  <div class="bar"><button class="btn ghost sm" id="dojoBack">← ホーム</button><h2>🥋 圧着マーク道場</h2><div class="spacer"></div><div class="chip">🏆 ベスト <b id="dBest">0</b></div></div>
+  <div class="dojo-body">
+    <div id="dStart" class="dcard">
+      <h3>45秒タイムアタック！</h3>
+      <p>電線の<b>太さ</b>と<b>本数</b>を見て、リングスリーブの<br><b style="color:#facc15">圧着マーク（〇・小・中）</b>を素早く選ぼう。<br>連続正解でボーナス！ 間違えると −3秒。</p>
+      <button class="btn gold xl" id="dStartBtn">はじめる！</button>
+    </div>
+    <div id="dPlay" class="dcard hidden">
+      <div class="dhud"><div>スコア <b id="dScore">0</b></div><div>🔥 <b id="dStreak">0</b> 連続</div><div>⏱ <b id="dTime">45</b></div></div>
+      <div class="dtimebar"><div id="dTimeBar" style="width:100%"></div></div>
+      <div class="dq" id="dQ"></div>
+      <div class="dans"><button class="dbtn" data-a="〇">〇</button><button class="dbtn" data-a="小">小</button><button class="dbtn" data-a="中">中</button></div>
+      <div class="dfb" id="dFb"></div>
+    </div>
+    <div id="dEnd" class="dcard hidden"></div>
+  </div>
+</section>
+
+<!-- ===== MODALS ===== -->
+<div class="modal hidden" id="m-howto">
+  <div class="mbox">
+    <div class="mhead"><h3>📖 遊び方</h3><button class="mclose" data-close>&times;</button></div>
+    <div class="mbody">
+      <p>親方（👷）から出される<b>お題</b>どおりに電気が流れるよう、電線をつないでいくゲームです。完成したら<b>「検査を受ける」</b>で採点！</p>
+      <h4>🕹 操作</h4>
+      <ol>
+        <li><b>端子（○）</b>をクリック → つなぎたい相手をクリックで電線が引けます。</li>
+        <li>器具どうしは原則つながず、<b>ボックス内の空き</b>をクリックして<b>接続点</b>を作り、そこに集めます。</li>
+        <li>接続点の<b>「？」タグ</b>をクリックして、リングスリーブの<b>圧着マーク（〇/小/中）</b>や差込形コネクタの本数を選びます。</li>
+        <li><b>スイッチ本体</b>をクリックすると ON/OFF。ランプがその場で光るので、検査前に動作確認できます。</li>
+        <li>電線の色は右パネル（スマホは下のバー）か <b>1〜4キー</b> で切り替え。</li>
+      </ol>
+      <h4>📱 スマホでの操作</h4>
+      <ul>
+        <li>端子から指を<b>そのまま滑らせて</b>離しても配線できます（タップ→タップでもOK）。</li>
+        <li><b>2本指でピンチ</b>して拡大・縮小、空いている所を<b>1本指でドラッグ</b>して移動。右上の ＋ － ⤢ ボタンも使えます。</li>
+        <li>電線をタップ → 色の変更・撤去。端子や接続点を<b>長押し</b> → つながっている線をまとめて外す。</li>
+        <li>お題やヒントは下のバーの<b>「📋 お題」</b>から。</li>
+      </ul>
+      <h4>🏅 採点（100点満点）</h4>
+      <ul>
+        <li>⚡ 動作 40点 … スイッチのすべての組み合わせでお題どおり点くか</li>
+        <li>🎨 極性・色 20点 … 白＝接地側、黒＝非接地側、W端子に白 など</li>
+        <li>🔗 接続・圧着 20点 … ボックス内接続、圧着マークの選択</li>
+        <li>♻ 効率 10点 … 目標本数以内の電線で作れたか（＝設計力！）</li>
+        <li>⏱ タイム 10点 … 目標タイム以内か</li>
+      </ul>
+      <p>動作が完璧ならクリア★。ミスなし高得点で★★★。クリアすると次のステージが開きます。</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="m-rules">
+  <div class="mbox">
+    <div class="mhead"><h3>📘 早見表</h3><button class="mclose" data-close>&times;</button></div>
+    <div class="mbody">
+      <h4>🎨 電線の色のルール</h4>
+      <ul>
+        <li><b>接地側（N）</b>の電線は必ず <b>白</b>。ランプの受金ねじ側・<b>W表示の端子</b>・コンセントのW側へ。</li>
+        <li><b>電源からスイッチ・コンセントまで</b>の非接地側（L）は必ず <b>黒</b>。</li>
+        <li>スイッチ→負荷の<b>返り線</b>、3路の<b>トラベラー線</b>は残りの色（赤など）でOK。</li>
+        <li><b>緑</b>は接地線（アース）専用。</li>
+      </ul>
+      <h4>🧠 設計の鉄則</h4>
+      <ul>
+        <li>スイッチは<b>非接地側（L）</b>に入れる。白線はスイッチを通さない。</li>
+        <li>電線どうしの接続は<b>ボックス内</b>で。器具間の直結は同じ連用枠の<b>渡り線</b>だけ。</li>
+        <li>1つの端子に入れられる電線は2本まで（渡り）。</li>
+      </ul>
+      <h4>🔗 リングスリーブ（圧着マーク）</h4>
+      <table class="tbl">
+        <tr><th>マーク</th><th>1.6mmのみ</th><th>2.0mmのみ</th><th>2.0mm＋1.6mm</th></tr>
+        <tr><td class="mk">〇</td><td>2本</td><td>―</td><td>―</td></tr>
+        <tr><td class="mk">小</td><td>3〜4本</td><td>2本</td><td>2.0×1 ＋ 1.6×1〜2</td></tr>
+        <tr><td class="mk">中</td><td>5〜6本</td><td>3〜4本</td><td>2.0×1 ＋ 1.6×3〜5<br>2.0×2 ＋ 1.6×1〜3</td></tr>
+      </table>
+      <h4>🔌 差込形コネクタ</h4>
+      <p>接続する電線の本数と同じ「◯本用」を使う（3本なら差3）。</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="m-install">
+  <div class="mbox">
+    <div class="mhead"><h3>📲 アプリとして使う</h3><button class="mclose" data-close>&times;</button></div>
+    <div class="mbody">
+      <h4>iPhone / iPad（Safari）</h4>
+      <ol><li>画面下（iPadは右上）の <b>共有ボタン</b>（□に↑）をタップ</li><li><b>「ホーム画面に追加」</b>を選ぶ</li><li>右上の<b>「追加」</b>をタップ</li></ol>
+      <h4>Android（Chrome）</h4>
+      <ol><li>右上の <b>︙</b> メニューをタップ</li><li><b>「アプリをインストール」</b>または<b>「ホーム画面に追加」</b>を選ぶ</li></ol>
+      <p class="install-tip">ホーム画面のアイコンから開くと全画面で起動し、一度開いた後はオフラインでも遊べます。</p>
+    </div>
+  </div>
+</div>
+<div class="modal hidden" id="m-result"><div class="mbox" id="resultBox"></div></div>
+
+<div id="toast"></div>
+<canvas id="fx"></canvas>
+
+<script>
+/* =====================================================
+   データ定義
+===================================================== */
+const DEV = {
+  power:  {name:'電源 100V', cls:'power', icon:'⚡', pins:[{id:'N',label:'N'},{id:'L',label:'L'}], maxWire:1},
+  sw1:    {name:'片切スイッチ', cls:'switch', pins:[{id:'a',label:'1'},{id:'b',label:'2'}], states:[[],[['a','b']]], stateNames:['OFF','ON']},
+  sw3:    {name:'3路スイッチ', cls:'switch', pins:[{id:'0',label:'0'},{id:'1',label:'1'},{id:'3',label:'3'}], states:[[['0','1']],[['0','3']]], stateNames:['1側','3側']},
+  sw4:    {name:'4路スイッチ', cls:'switch', pins:[{id:'1',label:'1'},{id:'3',label:'3'},{id:'2',label:'2'},{id:'4',label:'4'}], states:[[['1','2'],['3','4']],[['1','4'],['3','2']]], stateNames:['ストレート','クロス']},
+  lamp:   {name:'ランプレセプタクル', cls:'load', icon:'💡', pins:[{id:'W',label:'W'},{id:'B',label:'B'}], load:true, polar:true},
+  ceiling:{name:'引掛シーリング', cls:'load', icon:'◎', pins:[{id:'W',label:'W'},{id:'B',label:'B'}], load:true, polar:true},
+  pilot:  {name:'パイロットランプ', cls:'load', icon:'PL', pins:[{id:'a',label:'1'},{id:'b',label:'2'}], load:true},
+  outlet: {name:'コンセント', cls:'outlet', icon:'🔌', pins:[{id:'W',label:'W'},{id:'B',label:'B'}], load:true, polar:true, outlet:true},
+};
+
+const BOX = {x:380, y:170, w:260, h:300};
+const P0 = {id:'P', type:'power', x:40, y:265, face:'right'};
+
+const STAGES = [
+{ id:1, title:'はじめての点灯', sub:'片切スイッチでランプを点滅', conn:'ring', powerSize:1.6, optimal:6, par:90,
+  story:'まずは基本中の基本だ。スイッチ イ でランプ イ を点けたり消したりできるようにしてみな。白と黒の使い分けを忘れるなよ！',
+  devices:[P0, {id:'SW1',type:'sw1',label:'スイッチ イ',x:435,y:520,face:'top'}, {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:270,face:'left'}],
+  expect:{L1:{sw:'SW1'}},
+  hints:['電源のN（接地側）から白線をボックスの接続点へ。そこからランプのW（受金ねじ側）へ白線をつなごう。',
+         '電源のL（非接地側）から黒線を別の接続点へ。そこからスイッチの片方の端子へ黒線。',
+         'スイッチのもう片方 → 接続点 → ランプのB（中心）へ。これが「返り線」（赤でOK）。1.6mm×2本の接続点はぜんぶ「〇」！'],
+  point:'【設計の基本形】\n・白(N)はスイッチを通らず、負荷へ直行\n・黒(L)はスイッチ・コンセントへ\n・スイッチ→負荷の線を「返り線」と呼ぶ\nこの3つの流れが、すべての候補問題の土台。\n1.6mm×2本の接続は圧着マーク「〇」。'},
+
+{ id:2, title:'コンセントの追加', sub:'照明＋いつでも使えるコンセント', conn:'ring', powerSize:1.6, optimal:8, par:120,
+  story:'次はコンセント付きだ。コンセントはスイッチに関係なく、いつでも使えないと困るよな？',
+  devices:[P0, {id:'SW1',type:'sw1',label:'スイッチ イ',x:435,y:520,face:'top'}, {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:150,face:'left'}, {id:'OUT',type:'outlet',label:'コンセント',x:790,y:380,face:'left'}],
+  expect:{L1:{sw:'SW1'}, OUT:'always'},
+  hints:['コンセントは常時通電。白(N)と黒(L)の両方を直接もらう器具だ。',
+         'Nの接続点には「電源N・ランプW・コンセントW」の3本が集まる。1.6mm×3本は何マーク？',
+         'L側も「電源L・スイッチ・コンセントB」で3本 →「小」。返り線は2本 →「〇」。'],
+  point:'【分岐の考え方】\n負荷が増えたら「同じ仲間の線を1か所に集める」。\nNの仲間・Lの仲間・返り線の仲間に分けると、\n接続点の数＝必要なスリーブの数になる。\n1.6mm×3〜4本 →「小」。'},
+
+{ id:3, title:'2灯を別々に', sub:'2つのスイッチ・渡り線を使う', conn:'ring', powerSize:1.6, optimal:10, par:150,
+  story:'スイッチが2つ並んでいる。同じ連用枠なら「渡り線」が使えるぞ。うまく使えば電線が1本減る。腕の見せ所だ！',
+  devices:[P0, {id:'L1',type:'lamp',label:'ランプ イ',x:435,y:30,face:'bottom'},
+           {id:'SW1',type:'sw1',label:'スイッチ イ',x:330,y:520,face:'top',group:'g1'}, {id:'SW2',type:'sw1',label:'スイッチ ロ',x:490,y:520,face:'top',group:'g1'},
+           {id:'CL',type:'ceiling',label:'引掛シーリング ロ',x:790,y:270,face:'left'}],
+  expect:{L1:{sw:'SW1'}, CL:{sw:'SW2'}},
+  hints:['Lはスイッチ イ に入れ、スイッチ イ の同じ端子から ロ へ短い黒線（渡り線）を直接つなげる。',
+         'Nの接続点：電源N・ランプW・シーリングW の3本 →「小」。L側は電源L・スイッチ イ の2本 →「〇」。',
+         '返り線は2系統。イ→ランプ イ、ロ→シーリング ロ。それぞれ別の接続点（〇）で。'],
+  point:'【渡り線で電線を節約】\n同じ連用枠のスイッチは、渡り線でLを分けると\nボックスへ行く電線が1本減り、L側の接続点も2本(〇)で済む。\n電線を減らす＝材料・作業時間・ミスの削減。\nこれが「設計」の第一歩。'},
+
+{ id:4, title:'2.0mmの罠', sub:'太い電線が混ざるとスリーブが変わる', conn:'ring', powerSize:2.0, optimal:10, par:150,
+  story:'今回は電源からボックスまで2.0mmの太い線だ。本数が同じでも、太さでスリーブが変わる。刻印ミスは一発アウトだぞ！',
+  devices:[P0, {id:'L1',type:'lamp',label:'ランプ イ',x:435,y:30,face:'bottom'}, {id:'SW1',type:'sw1',label:'スイッチ イ',x:435,y:520,face:'top'},
+           {id:'CL',type:'ceiling',label:'引掛シーリング イ',x:790,y:150,face:'left'}, {id:'OUT',type:'outlet',label:'コンセント',x:790,y:380,face:'left'}],
+  expect:{L1:{sw:'SW1'}, CL:{sw:'SW1'}, OUT:'always'},
+  hints:['電源から出る線は2.0mm（画面では太く表示）。早見表の「2.0mm＋1.6mm」の列を見よう。',
+         'ランプとシーリングは同じスイッチ イ で同時に点く → 返り線の接続点に2つの器具を集める。',
+         'N：2.0×1＋1.6×3 →「中」。L：2.0×1＋1.6×2 →「小」。返り線：1.6×3 →「小」。'],
+  point:'【2.0mmの罠】\n同じ本数でも2.0mmが混ざると必要なスリーブが大きくなる。\n・2.0×1 ＋ 1.6×1〜2 →「小」\n・2.0×1 ＋ 1.6×3〜5 →「中」\n施工条件の「2.0mm指定」の見落としは刻印ミス＝即欠陥。'},
+
+{ id:5, title:'同時点滅パイロット', sub:'ランプと一緒に点く表示灯', conn:'insert', powerSize:1.6, optimal:8, par:150,
+  story:'今回はアウトレットボックスで差込形コネクタを使う。パイロットランプはランプと「一緒に」点いて「一緒に」消えるようにしてくれ。',
+  devices:[P0, {id:'SW1',type:'sw1',label:'スイッチ イ',x:330,y:520,face:'top',group:'g1'}, {id:'PL',type:'pilot',label:'パイロット',x:490,y:520,face:'top',group:'g1'},
+           {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:270,face:'left'}],
+  boxType:'outletbox',
+  expect:{L1:{sw:'SW1'}, PL:{sw:'SW1'}},
+  hints:['同時点滅＝ランプと並列。パイロットは「返り線」と「N」の間に入れる。',
+         'スイッチの返り線側端子からパイロットへ渡り線。パイロットのもう片方はボックスのN（白）へ。',
+         'N：電源N・ランプW・パイロット の3本 →「差3」。L：電源L・スイッチ の2本 →「差2」。'],
+  point:'【並列＝同時点滅】\n負荷を「返り線〜N」の間に並べると、スイッチONで全部同時に点く。\n差込形コネクタは「つなぐ本数」と同じ口数を選ぶ。'},
+
+{ id:6, title:'常時点灯パイロット', sub:'いつでも点いている表示灯', conn:'insert', powerSize:1.6, optimal:10, par:180,
+  story:'今度のパイロットは「常時点灯」。スイッチに関係なく、ずっと点いていなきゃダメだ。同時点滅とどこが違う？',
+  devices:[P0, {id:'SW1',type:'sw1',label:'スイッチ イ',x:330,y:520,face:'top',group:'g1'}, {id:'PL',type:'pilot',label:'パイロット',x:490,y:520,face:'top',group:'g1'},
+           {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:150,face:'left'}, {id:'OUT',type:'outlet',label:'コンセント',x:790,y:380,face:'left'}],
+  boxType:'outletbox',
+  expect:{L1:{sw:'SW1'}, PL:'always', OUT:'always'},
+  hints:['常時点灯＝コンセントと同じく L と N に直接つなぐ。',
+         'Lをスイッチの電源側端子に入れ、その同じ端子からパイロットへ渡り線。パイロットのもう片方はNへ。',
+         'N：電源N・ランプW・コンセントW・パイロット の4本 →「差4」。L：電源L・スイッチ・コンセントB の3本 →「差3」。'],
+  point:'【パイロットランプは「どこに並べるか」で動作が変わる】\n・同時点滅：返り線〜N（スイッチ連動）\n・常時点灯：L〜N（スイッチ無関係）\n・異時点滅：スイッチと並列（OFFのとき点灯）\n設計では「どの電位の間に負荷を置くか」を考える。'},
+
+{ id:7, title:'3路スイッチ', sub:'2か所から点けたり消したり', conn:'ring', powerSize:1.6, optimal:10, par:180,
+  story:'階段の上と下、どっちからでも点けたり消したりできる。それが3路スイッチだ。0・1・3の端子をよく見ろよ。',
+  devices:[P0, {id:'S3A',type:'sw3',label:'3路 イ(下)',x:300,y:520,face:'top'}, {id:'S3B',type:'sw3',label:'3路 イ(上)',x:560,y:520,face:'top'},
+           {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:270,face:'left'}],
+  expect:{L1:{toggle:['S3A','S3B']}},
+  hints:['3路スイッチの「0」が共通端子。電源L → 片方の0。もう片方の0 → ランプ中心(B)。',
+         '3路どうしは「1と1」「3と3」をつなぐ（トラベラー線）。ボックスで中継しよう。',
+         '接続点はすべて2本ずつ →ぜんぶ「〇」。合計5か所。'],
+  point:'【3路スイッチ＝2か所から点滅】\n0端子：片方は電源L、もう片方はランプへ。\n1・3端子：2本の「トラベラー線」で結ぶ。\nどちらのスイッチを切り替えても回路の通る道が変わる仕組み。'},
+
+{ id:8, title:'4路スイッチ（ボス）', sub:'3か所から点滅させろ！', conn:'ring', powerSize:1.6, optimal:14, par:240,
+  story:'最後の試練だ。3か所のどこからでも点滅できるようにしてみろ。3路と3路の間に4路をはさむんだ。これができたら一人前だ！',
+  devices:[P0, {id:'S3A',type:'sw3',label:'3路 (1)',x:230,y:520,face:'top'}, {id:'S4',type:'sw4',label:'4路 (2)',x:420,y:520,face:'top'}, {id:'S3B',type:'sw3',label:'3路 (3)',x:656,y:520,face:'top'},
+           {id:'L1',type:'lamp',label:'ランプ イ',x:790,y:270,face:'left'}],
+  expect:{L1:{toggle:['S3A','S3B','S4']}},
+  hints:['4路はトラベラー線の「途中」に割り込ませる。',
+         '3路(1)の1・3 → 4路の1・3。4路の2・4 → 3路(3)の1・3。すべてボックス経由。',
+         '電源L → 3路(1)の0、3路(3)の0 → ランプB。接続点は全部2本で「〇」。'],
+  point:'【4路で3か所以上から点滅】\n3路─4路─3路の順に並べる。4路は何台でも間に追加できる。\n4路はストレート/クロスでトラベラーの行き先を入れ替える。\nここまでで複線図の基本パターンは制覇！'},
+];
+
+/* 幾何計算 */
+function geom(d){
+  const def = DEV[d.type], n = def.pins.length; let w,h;
+  if(d.face==='left'||d.face==='right'){ w=150; h=Math.max(98, n*32+34); } else { w=Math.max(150, n*46+40); h=100; }
+  const pins = {};
+  def.pins.forEach((p,i)=>{
+    let x,y,nx=0,ny=0;
+    if(d.face==='left'){ x=d.x; y=d.y+h*(i+1)/(n+1); nx=-1; }
+    else if(d.face==='right'){ x=d.x+w; y=d.y+h*(i+1)/(n+1); nx=1; }
+    else if(d.face==='top'){ x=d.x+w*(i+1)/(n+1); y=d.y; ny=-1; }
+    else { x=d.x+w*(i+1)/(n+1); y=d.y+h; ny=1; }
+    pins[p.id]={x,y,nx,ny};
+  });
+  return {w,h,pins};
+}
+STAGES.forEach(st=>{ st.devices = st.devices.map(d=>({...d})); st.devices.forEach(d=>d.g=geom(d)); });
+
+/* =====================================================
+   セーブ
+===================================================== */
+const SAVE_KEY = 'fukusenzu_quest_v1';
+let save = {xp:0, stars:{}, best:{}, dojoBest:0, muted:false, seenHowto:false};
+try{ const s = JSON.parse(localStorage.getItem(SAVE_KEY)); if(s) save = Object.assign(save, s); }catch(e){}
+function persist(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){} }
+
+const TITLES = [[1,'見習い電工'],[3,'配線ルーキー'],[5,'結線職人'],[8,'複線図マスター'],[12,'電気工事の匠']];
+const xpFor = lv => 60*(lv-1)*(lv-1) + 40*(lv-1);
+function levelInfo(xp){ let lv=1; while(xp >= xpFor(lv+1)) lv++; return {lv, cur:xp-xpFor(lv), need:xpFor(lv+1)-xpFor(lv)}; }
+function titleFor(lv){ let t=TITLES[0][1]; TITLES.forEach(([l,n])=>{ if(lv>=l) t=n; }); return t; }
+function addXP(n){
+  const before = levelInfo(save.xp).lv; save.xp += n; persist();
+  const after = levelInfo(save.xp).lv;
+  if(after > before){ setTimeout(()=>{ toast(`🎉 レベルアップ！ Lv.${after}「${titleFor(after)}」`, 'lv'); SFX.fanfare(); }, 900); }
+}
+
+/* =====================================================
+   サウンド
+===================================================== */
+let actx = null;
+function ac(){ if(!actx){ try{ actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx && actx.state==='suspended') actx.resume(); return actx; }
+function tone(f,d,type='sine',v=0.07,delay=0){
+  if(save.muted) return; const a=ac(); if(!a) return;
+  const t=a.currentTime+delay, o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+d+0.03);
+}
+const SFX = {
+  tap:()=>tone(520,.05,'square',.03),
+  connect:()=>{ tone(880,.07,'triangle',.07); tone(1320,.09,'triangle',.05,.05); },
+  on:()=>{ tone(660,.12,'sine',.07); tone(990,.2,'sine',.06,.08); },
+  err:()=>tone(170,.18,'sawtooth',.05),
+  short:()=>{ tone(80,.4,'sawtooth',.13); tone(130,.3,'square',.06,.05); tone(60,.3,'sawtooth',.08,.15); },
+  good:()=>{ [784,1047].forEach((f,i)=>tone(f,.12,'triangle',.07,i*.07)); },
+  fanfare:()=>{ [523,659,784,1047,784,1047].forEach((f,i)=>tone(f,.22,'triangle',.08,i*.12)); },
+  fail:()=>{ [392,330,262].forEach((f,i)=>tone(f,.28,'sawtooth',.05,i*.16)); }
+};
+
+/* =====================================================
+   回路評価（Union-Find）
+===================================================== */
+class UF{
+  constructor(){ this.p=new Map(); }
+  find(x){ if(!this.p.has(x)){ this.p.set(x,x); return x; } let r=x; while(this.p.get(r)!==r) r=this.p.get(r);
+    let c=x; while(this.p.get(c)!==r){ const n=this.p.get(c); this.p.set(c,r); c=n; } return r; }
+  union(a,b){ const ra=this.find(a), rb=this.find(b); if(ra!==rb) this.p.set(ra,rb); }
+}
+const K = ep => ep.t==='pin' ? `${ep.dev}.${ep.pin}` : `J${ep.id}`;
+function evaluate(st, wires, swStates, withSwitches){
+  const uf = new UF();
+  wires.forEach(w=>uf.union(K(w.a), K(w.b)));
+  if(withSwitches) st.devices.forEach(d=>{ const def=DEV[d.type]; if(def.states) def.states[swStates[d.id]||0].forEach(([p,q])=>uf.union(`${d.id}.${p}`,`${d.id}.${q}`)); });
+  const rL = uf.find('P.L'), rN = uf.find('P.N'), short = rL===rN;
+  const lit = {};
+  st.devices.forEach(d=>{ const def=DEV[d.type]; if(def.load){ const [p,q]=def.pins.map(x=>uf.find(`${d.id}.${x.id}`)); lit[d.id] = !short && ((p===rL&&q===rN)||(p===rN&&q===rL)); } });
+  return {uf, rL, rN, short, lit};
+}
+function sleeveFor(n16, n20){
+  if(n20===0){ if(n16===2) return '〇'; if(n16>=3&&n16<=4) return '小'; if(n16>=5&&n16<=6) return '中'; return null; }
+  if(n16===0){ if(n20===2) return '小'; if(n20>=3&&n20<=4) return '中'; return null; }
+  if(n20===1){ if(n16<=2) return '小'; if(n16<=5) return '中'; return null; }
+  if(n20===2){ if(n16<=3) return '中'; return null; }
+  return null;
+}
+
+/* =====================================================
+   ゲーム状態
+===================================================== */
+let G = null;
+const svg = document.getElementById('board');
+const boardWrap = document.getElementById('boardWrap');
+const picker = document.getElementById('picker');
+
+const devById = id => G.st.devices.find(d=>d.id===id);
+const lab = d => d.label || DEV[d.type].name;
+const sameEp = (a,b) => a.t===b.t && (a.t==='pin' ? (a.dev===b.dev&&a.pin===b.pin) : a.id===b.id);
+const touches = (w,ep) => sameEp(w.a,ep)||sameEp(w.b,ep);
+const juncWires = id => G.wires.filter(w=>touches(w,{t:'j',id}));
+const epCount = ep => G.wires.filter(w=>touches(w,ep)).length;
+const snap = () => ({wires:JSON.parse(JSON.stringify(G.wires)), juncs:JSON.parse(JSON.stringify(G.juncs))});
+function pushHist(s){ G.history.push(s||snap()); if(G.history.length>50) G.history.shift(); }
+const wireSize = w => ((w.a.t==='pin'&&w.a.dev==='P')||(w.b.t==='pin'&&w.b.dev==='P')) ? G.st.powerSize : 1.6;
+
+function startStage(idx){
+  const st = STAGES[idx];
+  G = {idx, st, wires:[], juncs:[], sw:{}, hints:0, start:Date.now(), history:[], color:G?G.color:'black', wiring:null, prevLit:{}, prevShort:false, nextJ:1, ptr:null};
+  st.devices.forEach(d=>{ if(DEV[d.type].states) G.sw[d.id]=0; });
+  document.getElementById('gNo').textContent = `STAGE ${idx+1}`;
+  document.getElementById('gTitle').textContent = st.title;
+  document.getElementById('gStory').textContent = st.story;
+  document.getElementById('gOpt').textContent = st.optimal;
+  document.getElementById('gPar').textContent = fmt(st.par);
+  const c = [];
+  c.push(st.conn==='ring' ? '<span>🔗 リングスリーブ接続</span>' : '<span>🔗 差込形コネクタ接続</span>');
+  c.push(st.powerSize===2.0 ? '<span class="warn">⚠ 電源〜ボックス間 2.0mm</span>' : '<span>電線 1.6mm</span>');
+  if(st.devices.some(d=>d.group)) c.push('<span>🟩 緑の点線内＝同じ連用枠（渡り線OK）</span>');
+  document.getElementById('gCond').innerHTML = c.join('');
+  document.getElementById('hintBox').classList.add('hidden');
+  closePicker();
+  setColor(G.color);
+  showScreen('game');
+  resetView();
+  refresh();
+  if(isMobile()){ openSheet(); if(innerHeight>innerWidth && !sessionStorage.getItem('rotTip')){ try{sessionStorage.setItem('rotTip','1');}catch(e){} setTimeout(()=>toast('📱 横向きにすると広く使えます'),800); } }
+}
+
+/* =====================================================
+   描画
+===================================================== */
+function epPos(ep){
+  if(ep.t==='pin'){ return devById(ep.dev).g.pins[ep.pin]; }
+  const j = G.juncs.find(j=>j.id===ep.id); return {x:j.x, y:j.y, j:true};
+}
+function pathD(a,b){
+  const dist = Math.hypot(b.x-a.x, b.y-a.y), k = Math.min(90, Math.max(30, dist*0.4));
+  const c1 = a.j||a.nx===undefined ? {x:a.x+(b.x-a.x)*.25, y:a.y+(b.y-a.y)*.25} : {x:a.x+a.nx*k, y:a.y+a.ny*k};
+  const c2 = b.j||b.nx===undefined ? {x:b.x+(a.x-b.x)*.25, y:b.y+(a.y-b.y)*.25} : {x:b.x+b.nx*k, y:b.y+b.ny*k};
+  return `M${a.x},${a.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${b.x},${b.y}`;
+}
+
+function render(ev){
+  const st = G.st, B = BOX;
+  let s = `<defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#d5dde8" stroke-width="1"/></pattern>
+    <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs><rect x="0" y="0" width="1000" height="640" fill="url(#grid)"/>`;
+
+  // 連用枠
+  const groups = {};
+  st.devices.forEach(d=>{ if(d.group) (groups[d.group]=groups[d.group]||[]).push(d); });
+  Object.values(groups).forEach(arr=>{
+    const x1=Math.min(...arr.map(d=>d.x))-8, y1=Math.min(...arr.map(d=>d.y))-8, x2=Math.max(...arr.map(d=>d.x+d.g.w))+8, y2=Math.max(...arr.map(d=>d.y+d.g.h))+8;
+    s += `<rect class="grp" x="${x1}" y="${y1}" width="${x2-x1}" height="${y2-y1}" rx="14"/><text class="grp-t" x="${x1+8}" y="${y1-6}">連用枠（渡り線OK）</text>`;
+  });
+
+  // ボックス
+  s += `<rect class="box ${st.boxType||''}" data-act="box" x="${B.x}" y="${B.y}" width="${B.w}" height="${B.h}" rx="16"/>
+        <text class="box-t" x="${B.x+12}" y="${B.y+22}">${st.boxType==='outletbox'?'アウトレットボックス':'ジョイントボックス'}（${TAP}で接続点）</text>`;
+
+  // 器具本体
+  st.devices.forEach(d=>{
+    const def=DEV[d.type], g=d.g, lit=ev.lit[d.id];
+    let cx=d.x+g.w/2, cy=d.y+g.h/2;
+    if(d.face==='left') cx+=12; if(d.face==='right') cx-=12; if(d.face==='top') cy+=10; if(d.face==='bottom') cy-=10;
+    s += `<g class="dev ${def.cls} ${lit?'lit':''}" ${def.states?`data-act="sw" data-dev="${d.id}"`:''}>
+      <rect class="dev-body" x="${d.x}" y="${d.y}" width="${g.w}" height="${g.h}" rx="12"/>
+      <rect class="dev-stripe" x="${d.x+8}" y="${d.y+(d.face==='top'?g.h-10:5)}" width="${g.w-16}" height="5" rx="2"/>`;
+    if(def.states){
+      const st2 = G.sw[d.id];
+      s += `<rect class="sw-plate" x="${cx-14}" y="${cy-32}" width="28" height="38" rx="6"/>
+            <rect class="sw-knob ${st2?'on':''}" x="${cx-9}" y="${st2?cy-28:cy-12}" width="18" height="14" rx="3"/>
+            <text class="sw-state" x="${cx+20}" y="${cy-8}">${def.stateNames[st2]}</text>`;
+    } else {
+      s += `<circle class="icon-c" cx="${cx}" cy="${cy-14}" r="18" ${lit?'filter="url(#glow)"':''}/><text class="icon-t" x="${cx}" y="${cy-9}">${def.icon}</text>`;
+    }
+    s += `<text class="dev-name" x="${cx}" y="${cy+24}">${lab(d)}</text></g>`;
+  });
+
+  // 電線
+  const activeRoots = new Set();
+  if(!ev.short) Object.entries(ev.lit).forEach(([id,on])=>{ if(on) DEV[devById(id).type].pins.forEach(p=>activeRoots.add(ev.uf.find(`${id}.${p.id}`))); });
+  G.wires.forEach((w,i)=>{
+    const a=epPos(w.a), b=epPos(w.b), d=pathD(a,b), r=ev.uf.find(K(w.a)), thick = wireSize(w)===2.0 ? ' thick':'';
+    s += `<g class="wg" data-act="wire" data-i="${i}">`;
+    if(w.color==='white') s += `<path class="wire w-outline${thick}" d="${d}"/>`;
+    s += `<path class="wire w-${w.color}${thick}" d="${d}"/>`;
+    if(ev.short && r===ev.rL) s += `<path class="wire shortw" d="${d}"/>`;
+    else if(activeRoots.has(r)) s += `<path class="wire flow" d="${d}"/>`;
+    s += `<path class="wire-hit" d="${d}"/></g>`;
+  });
+
+  // 端子
+  st.devices.forEach(d=>{
+    DEV[d.type].pins.forEach(p=>{
+      const P=d.g.pins[p.id], cnt=epCount({t:'pin',dev:d.id,pin:p.id});
+      const isStart = G.wiring && G.wiring.from.t==='pin' && G.wiring.from.dev===d.id && G.wiring.from.pin===p.id;
+      let lx=P.x, ly=P.y+4, anc='middle';
+      if(d.face==='left'){ lx=P.x+15; anc='start'; } else if(d.face==='right'){ lx=P.x-15; anc='end'; }
+      else if(d.face==='top'){ ly=P.y+24; } else { ly=P.y-14; }
+      let fill='#334155';
+      if(d.type==='power') fill = p.id==='N' ? '#2563eb' : '#111827';
+      if(p.id==='W') fill='#2563eb';
+      s += `<text class="pin-l" x="${lx}" y="${ly}" text-anchor="${anc}" fill="${fill}" style="fill:${fill}">${p.label}</text>
+            <circle class="hit" data-act="pin" data-dev="${d.id}" data-pin="${p.id}" cx="${P.x}" cy="${P.y}" r="${HIT_R}"/>
+            <circle class="pin ${cnt?'used':''} ${isStart?'start':''}" data-act="pin" data-dev="${d.id}" data-pin="${p.id}" cx="${P.x}" cy="${P.y}" r="9"><title>${lab(d)} 端子${p.label}</title></circle>`;
+    });
+  });
+
+  // 接続点
+  G.juncs.forEach(j=>{
+    const c = juncWires(j.id).length;
+    const shape = st.conn==='ring' ? `<circle class="jc" cx="${j.x}" cy="${j.y}" r="14"/>` : `<rect class="jc" x="${j.x-14}" y="${j.y-14}" width="28" height="28" rx="5"/>`;
+    s += `<g class="junc ${st.conn}" data-act="junc" data-j="${j.id}"><circle class="hit" cx="${j.x}" cy="${j.y}" r="20"/>${shape}<text x="${j.x}" y="${j.y+4}">${c}</text></g>
+          <g class="jtag ${j.kind?'':'unset'}" data-act="jtag" data-j="${j.id}" transform="translate(${j.x+12},${j.y-38})"><rect width="42" height="24" rx="7"/><text x="21" y="17">${j.kind||'？'}</text></g>`;
+  });
+
+  // 仮の線
+  if(G.wiring) s += `<path id="temp" class="wire temp w-${G.color}" d=""/>`;
+  svg.innerHTML = s;
+  svg.classList.toggle('wiring', !!G.wiring);
+  if(G.wiring && G.ptr) updateTemp(G.ptr);
+}
+function updateTemp(pt){
+  const t = document.getElementById('temp'); if(!t||!G.wiring) return;
+  const a = epPos(G.wiring.from); t.setAttribute('d', pathD(a, {x:pt.x, y:pt.y, j:true}));
+}
+
+function refresh(){
+  const ev = evaluate(G.st, G.wires, G.sw, true);
+  if(ev.short && !G.prevShort){
+    SFX.short(); buzz([80,40,140]); boardWrap.classList.remove('shake'); void boardWrap.offsetWidth; boardWrap.classList.add('shake');
+  } else if(Object.keys(ev.lit).some(k=>ev.lit[k] && !G.prevLit[k])) SFX.on();
+  G.prevLit = ev.lit; G.prevShort = ev.short;
+  document.getElementById('shortBanner').style.display = ev.short ? 'block' : 'none';
+  render(ev); updateSide(ev);
+}
+
+function updateSide(ev){
+  const st = G.st;
+  document.getElementById('gExpect').innerHTML = Object.entries(st.expect).map(([id,ex])=>{
+    const d=devById(id), def=DEV[d.type], lit=ev.lit[id]; let txt, mark='na';
+    if(ex==='always'){ txt='常時（いつでも）使える'; mark = lit?'ok':'ng'; }
+    else if(ex.sw){ const want = G.sw[ex.sw]===1; txt = `${lab(devById(ex.sw))} で点滅`; mark = lit===want?'ok':'ng'; }
+    else { txt = `${ex.toggle.map(s=>lab(devById(s))).join('・')} のどこからでも点滅`; }
+    const stTxt = def.outlet ? (lit?'通電中':'電気なし') : (lit?'点灯中':'消灯');
+    return `<li class="${mark}"><span class="bulb ${lit?'on':''}">${def.outlet?'🔌':'💡'}</span><div><b>${lab(d)}</b><small>${txt}</small></div><span class="st">${stTxt}${mark==='ok'?' ✓':mark==='ng'?' ✗':''}</span></li>`;
+  }).join('');
+  const wc = G.wires.length, el = document.getElementById('gWires');
+  el.textContent = wc; el.style.color = wc>st.optimal ? '#f87171' : '';
+  const tip = document.getElementById('boardTip');
+  tip.textContent = (G.wiring ? 'つなぎ先の端子・接続点、またはボックス内をクリック（Escで取消）' :
+                    G.wires.length===0 ? '端子（○）かボックス内をクリックして配線スタート' :
+                    G.juncs.some(j=>!j.kind) ? '赤い「？」タグをクリックして圧着マークを決めよう' : 'スイッチ本体をクリックして動作確認！').replace(/クリック/g, TAP);
+}
+
+/* =====================================================
+   入力操作
+===================================================== */
+function svgPt(e){ const p=svg.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+const inBox = pt => pt.x>BOX.x+14 && pt.x<BOX.x+BOX.w-14 && pt.y>BOX.y+30 && pt.y<BOX.y+BOX.h-14;
+const capOf = ep => ep.t==='j' ? 6 : (DEV[devById(ep.dev).type].maxWire||2);
+
+function capOK(ep, silent){
+  if(epCount(ep) < capOf(ep)) return true;
+  if(!silent){ SFX.err(); buzz(30); toast(ep.t==='j' ? '接続点に集められるのは6本まで' : ep.dev==='P' ? '電源からは1端子につき1本だけ（ボックスへ）' : '1つの端子に入る電線は2本まで（渡り線）', 'err'); }
+  return false;
+}
+function findJunc(pt){ return G.juncs.find(j=>Math.hypot(j.x-pt.x, j.y-pt.y) < 24); }
+function makeJunc(pt){
+  const ex = findJunc(pt); if(ex) return {j:ex, created:false};
+  const j = {id:G.nextJ++, x:Math.round(pt.x/10)*10, y:Math.round(pt.y/10)*10, kind:null};
+  G.juncs.push(j); return {j, created:true};
+}
+function startWiring(ep, sn, createdId){
+  if(ep.t==='pin' && !capOK(ep)) return;
+  G.wiring = {from:ep, snap:sn, created:createdId}; SFX.tap(); refresh();
+}
+function cancelWiring(){
+  if(!G.wiring) return;
+  const c = G.wiring.created; G.wiring = null;
+  if(c!=null && juncWires(c).length===0) G.juncs = G.juncs.filter(j=>j.id!==c);
+  refresh();
+}
+function onEndpoint(ep){
+  if(!G.wiring){ startWiring(ep, snap(), null); return; }
+  const from = G.wiring.from;
+  if(sameEp(from, ep)){ cancelWiring(); return; }
+  if(from.t==='j' && ep.t==='j'){ SFX.err(); toast('接続点どうしは直接つなげません', 'err'); return; }
+  if(!capOK(ep)) return;
+  if(G.wires.some(w=>(sameEp(w.a,from)&&sameEp(w.b,ep))||(sameEp(w.a,ep)&&sameEp(w.b,from)))){ toast('すでに配線されています','err'); cancelWiring(); return; }
+  pushHist(G.wiring.snap);
+  G.wires.push({a:from, b:ep, color:G.color});
+  G.wiring = null; SFX.connect(); buzz(15);
+  refresh(); spark(epPos(ep));
+}
+function spark(p){
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('class','spark'); c.setAttribute('cx',p.x); c.setAttribute('cy',p.y); c.setAttribute('r',4);
+  svg.appendChild(c); setTimeout(()=>c.remove(), 500);
+}
+function removeWire(i){ pushHist(); G.wires.splice(i,1); SFX.tap(); refresh(); }
+function deleteJunc(id){ pushHist(); G.juncs=G.juncs.filter(j=>j.id!==id); G.wires=G.wires.filter(w=>!touches(w,{t:'j',id})); closePicker(); SFX.tap(); refresh(); }
+
+/* ===== 操作（タップ／ドラッグ配線／パン／ピンチ／長押し） ===== */
+const HIT_R = 15;
+const TAP = matchMedia('(pointer: coarse)').matches ? 'タップ' : 'クリック';
+const VB = {x:0, y:0, w:1000, h:640};
+function applyVB(){ svg.setAttribute('viewBox', `${VB.x} ${VB.y} ${VB.w} ${VB.h}`); }
+function clampVB(){ VB.w=Math.min(1000,Math.max(260,VB.w)); VB.h=VB.w*0.64; VB.x=Math.min(1000-VB.w,Math.max(0,VB.x)); VB.y=Math.min(640-VB.h,Math.max(0,VB.y)); }
+function resetView(){ VB.x=0; VB.y=0; VB.w=1000; VB.h=640; applyVB(); }
+function clientToSvg(cx,cy){ const p=svg.createSVGPoint(); p.x=cx; p.y=cy; return p.matrixTransform(svg.getScreenCTM().inverse()); }
+function zoomAt(f,cx,cy){
+  const before=clientToSvg(cx,cy); VB.w*=f; clampVB(); applyVB();
+  const after=clientToSvg(cx,cy); VB.x+=before.x-after.x; VB.y+=before.y-after.y; clampVB(); applyVB();
+}
+function zoomCenter(f){ const r=svg.getBoundingClientRect(); zoomAt(f, r.left+r.width/2, r.top+r.height/2); }
+function buzz(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+function nearestEp(pt, R){
+  let best=null, bd=R;
+  G.st.devices.forEach(d=>DEV[d.type].pins.forEach(p=>{ const P=d.g.pins[p.id], dd=Math.hypot(P.x-pt.x,P.y-pt.y); if(dd<bd){ bd=dd; best={t:'pin',dev:d.id,pin:p.id}; } }));
+  G.juncs.forEach(j=>{ const dd=Math.hypot(j.x-pt.x,j.y-pt.y); if(dd<bd){ bd=dd; best={t:'j',id:j.id}; } });
+  return best;
+}
+const touchR = () => Math.min(32, Math.max(HIT_R, 22/svg.getScreenCTM().a));
+function resolveTarget(cx, cy, pt, touch){
+  const raw = document.elementFromPoint(cx, cy);
+  const el = raw && raw.closest ? raw.closest('#board [data-act]') : null;
+  const act = el ? el.dataset.act : 'bg';
+  let t;
+  if(act==='pin') t={act, ep:{t:'pin',dev:el.dataset.dev,pin:el.dataset.pin}};
+  else if(act==='junc') t={act, ep:{t:'j',id:+el.dataset.j}};
+  else if(act==='jtag') t={act, jid:+el.dataset.j};
+  else {
+    const near = nearestEp(pt, touch ? touchR() : HIT_R);
+    if(near) t={act:near.t==='pin'?'pin':'junc', ep:near};
+    else if(act==='wire') t={act, i:+el.dataset.i};
+    else if(act==='sw') t={act, dev:el.dataset.dev};
+    else t={act:'bg'};
+  }
+  t.inBox = inBox(pt);
+  return t;
+}
+function doTap(t, pt, cx, cy){
+  if(t.act!=='jtag') closePicker();
+  if(t.act==='pin'||t.act==='junc'){ onEndpoint(t.ep); return; }
+  if(t.act==='jtag'){ if(G.wiring){ onEndpoint({t:'j',id:t.jid}); return; } openPicker(t.jid); return; }
+  if(G.wiring){
+    if(t.inBox){
+      if(G.wiring.from.t==='j'){ SFX.err(); buzz(30); toast('接続点どうしは直接つなげません','err'); return; }
+      const {j} = makeJunc(pt); onEndpoint({t:'j', id:j.id});
+    } else cancelWiring();
+    return;
+  }
+  if(t.act==='wire'){ openWireMenu(t.i, cx, cy); return; }
+  if(t.act==='sw'){ G.sw[t.dev]^=1; SFX.tap(); buzz(10); refresh(); return; }
+  if(t.inBox){ const sn=snap(); const {j,created}=makeJunc(pt); startWiring({t:'j', id:j.id}, sn, created?j.id:null); }
+}
+function longPress(t){
+  if(G.wiring) cancelWiring();
+  if(t.act==='pin'){ if(epCount(t.ep)){ buzz(40); pushHist(); G.wires=G.wires.filter(w=>!touches(w,t.ep)); SFX.tap(); toast('端子の電線を外しました'); refresh(); } }
+  else if(t.act==='junc'){ buzz(40); deleteJunc(t.ep.id); toast('接続点を削除しました'); }
+  else if(t.act==='jtag'){ buzz(40); deleteJunc(t.jid); toast('接続点を削除しました'); }
+  else if(t.act==='wire'){ buzz(40); removeWire(t.i); }
+}
+
+const ptrs = new Map(); let gest=null, lpTimer=null, lastPtrType='mouse';
+svg.addEventListener('pointerdown', e=>{
+  if(!G) return;
+  ac(); lastPtrType = e.pointerType;
+  if(e.pointerType==='mouse' && e.button!==0) return;
+  try{ svg.setPointerCapture(e.pointerId); }catch(_){}
+  ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  clearTimeout(lpTimer);
+  if(ptrs.size>=2){
+    if(gest && gest.type==='drag') cancelWiring();
+    const [a,b]=[...ptrs.values()];
+    gest={type:'pinch', d0:Math.hypot(a.x-b.x,a.y-b.y)||1, w0:VB.w, mid:clientToSvg((a.x+b.x)/2,(a.y+b.y)/2)};
+    return;
+  }
+  const pt=svgPt(e), touch=e.pointerType!=='mouse';
+  const t=resolveTarget(e.clientX, e.clientY, pt, touch);
+  gest={type:'tap', t, pt, sx:e.clientX, sy:e.clientY, vbx:VB.x, vby:VB.y, s:1/svg.getScreenCTM().a, touch};
+  if(touch && ['pin','junc','jtag','wire'].includes(t.act)){
+    lpTimer=setTimeout(()=>{ if(gest && gest.type==='tap'){ gest.type='done'; longPress(t); } }, 550);
+  }
+});
+svg.addEventListener('pointermove', e=>{
+  if(!G) return;
+  if(ptrs.has(e.pointerId)) ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+  if(gest && gest.type==='pinch'){
+    if(ptrs.size<2) return;
+    const [a,b]=[...ptrs.values()], d=Math.hypot(a.x-b.x,a.y-b.y)||1;
+    VB.w=gest.w0*gest.d0/d; clampVB(); applyVB();
+    const now=clientToSvg((a.x+b.x)/2,(a.y+b.y)/2); VB.x+=gest.mid.x-now.x; VB.y+=gest.mid.y-now.y; clampVB(); applyVB();
+    return;
+  }
+  if(gest && gest.type==='tap' && Math.hypot(e.clientX-gest.sx, e.clientY-gest.sy) > 8){
+    clearTimeout(lpTimer);
+    if(!G.wiring && (gest.t.act==='pin'||gest.t.act==='junc')){
+      gest.type='drag'; startWiring(gest.t.ep, snap(), null);
+      if(!G.wiring) gest.type='done';
+    } else gest.type='pan';
+  }
+  if(gest && gest.type==='pan'){
+    VB.x=gest.vbx-(e.clientX-gest.sx)*gest.s; VB.y=gest.vby-(e.clientY-gest.sy)*gest.s; clampVB(); applyVB();
+    return;
+  }
+  if(G.wiring){ const pt=svgPt(e); G.ptr=pt; updateTemp(pt); }
+});
+function endPtr(e, cancelled){
+  ptrs.delete(e.pointerId); clearTimeout(lpTimer);
+  if(!gest || !G) return;
+  if(gest.type==='pinch'){ if(ptrs.size===0) gest=null; return; }
+  const g=gest; gest=null;
+  if(cancelled){ if(g.type==='drag') cancelWiring(); return; }
+  if(g.type==='tap') doTap(g.t, g.pt, e.clientX, e.clientY);
+  else if(g.type==='drag'){
+    const pt=svgPt(e), t=resolveTarget(e.clientX, e.clientY, pt, g.touch);
+    if(t.act==='pin'||t.act==='junc'||t.act==='jtag'||t.inBox) doTap(t, pt, e.clientX, e.clientY);
+    else cancelWiring();
+  }
+}
+svg.addEventListener('pointerup', e=>endPtr(e,false));
+svg.addEventListener('pointercancel', e=>endPtr(e,true));
+svg.addEventListener('contextmenu', e=>{
+  e.preventDefault(); if(!G || lastPtrType!=='mouse') return;
+  const pt=svgPt(e); longPress(resolveTarget(e.clientX, e.clientY, pt, false));
+});
+svg.addEventListener('wheel', e=>{ e.preventDefault(); zoomAt(e.deltaY>0?1.12:1/1.12, e.clientX, e.clientY); }, {passive:false});
+document.getElementById('zIn').onclick = ()=>zoomCenter(1/1.35);
+document.getElementById('zOut').onclick = ()=>zoomCenter(1.35);
+document.getElementById('zFit').onclick = ()=>resetView();
+
+/* 電線メニュー（色変更・撤去） */
+function showPickerAt(cx, cy){
+  picker.classList.remove('hidden');
+  const w=boardWrap.getBoundingClientRect();
+  let left=cx-w.left-24, top=cy-w.top+16;
+  left=Math.min(left, w.width-picker.offsetWidth-8);
+  if(top+picker.offsetHeight > w.height-8) top=cy-w.top-picker.offsetHeight-16;
+  picker.style.left=Math.max(8,left)+'px'; picker.style.top=Math.max(8,top)+'px';
+}
+function openWireMenu(i, cx, cy){
+  const w=G.wires[i]; if(!w) return;
+  const names={black:'黒',white:'白',red:'赤',green:'緑'}, cols=[['black','#111827'],['white','#fff'],['red','#ef4444'],['green','#16a34a']];
+  picker.innerHTML = `<div class="pt">電線（${names[w.color]}・${wireSize(w)}mm）色を変える／撤去</div>
+    <div class="wmenu-colors">${cols.map(([c,h])=>`<button data-c="${c}" style="background:${h};${w.color===c?'border-color:#facc15;box-shadow:0 0 0 2px #facc15':''}"></button>`).join('')}</div>
+    <button class="pdel" data-del>✂ この電線を撤去</button>`;
+  showPickerAt(cx, cy);
+  picker.onclick = ev=>{
+    const b=ev.target.closest('button'); if(!b) return;
+    if(b.dataset.del!==undefined){ closePicker(); removeWire(i); return; }
+    if(b.dataset.c && b.dataset.c!==w.color){ pushHist(); w.color=b.dataset.c; SFX.tap(); }
+    closePicker(); refresh();
+  };
+}
+
+/* 圧着マークピッカー */
+function openPicker(id){
+  const j = G.juncs.find(x=>x.id===id); if(!j) return;
+  const el = svg.querySelector(`.jtag[data-j="${id}"]`); if(!el) return;
+  const ring = G.st.conn==='ring';
+  const opts = ring ? ['〇','小','中'] : ['差2','差3','差4','差5'];
+  picker.innerHTML = `<div class="pt">${ring?'リングスリーブの圧着マーク':'差込形コネクタ（何本用？）'}<br><span style="color:#94a3b8">この接続点：${juncDesc(id)}</span></div>
+    <div class="prow">${opts.map(o=>`<button data-k="${o}" class="${j.kind===o?'sel':''}">${o}</button>`).join('')}</div>
+    <button class="pdel" data-del>🗑 接続点を削除</button>`;
+  const r = el.getBoundingClientRect(); showPickerAt(r.left+r.width/2, r.top+r.height/2);
+  picker.onclick = ev=>{
+    const b = ev.target.closest('button'); if(!b) return;
+    if(b.dataset.del!==undefined){ deleteJunc(id); return; }
+    pushHist(); j.kind = b.dataset.k; SFX.tap(); closePicker(); refresh();
+  };
+}
+function juncDesc(id){
+  let n16=0, n20=0; juncWires(id).forEach(w=>wireSize(w)===2.0?n20++:n16++);
+  const parts=[]; if(n16) parts.push(`1.6mm×${n16}`); if(n20) parts.push(`2.0mm×${n20}`);
+  return parts.join(' ＋ ') || '電線なし';
+}
+function closePicker(){ picker.classList.add('hidden'); }
+document.addEventListener('pointerdown', e=>{ if(!picker.contains(e.target) && !e.target.closest('#board')) closePicker(); });
+
+/* 色 */
+function setColor(c){ if(G) G.color=c; document.querySelectorAll('.cbtn').forEach(b=>b.classList.toggle('active', b.dataset.color===c)); const t=document.getElementById('temp'); if(t) t.setAttribute('class',`wire temp w-${c}`); }
+document.querySelectorAll('.cbtn').forEach(b=>b.addEventListener('click', ()=>{ setColor(b.dataset.color); SFX.tap(); }));
+
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('game').classList.contains('active') || !G) return;
+  if(!document.getElementById('m-result').classList.contains('hidden')) return;
+  const map={'1':'black','2':'white','3':'red','4':'green'};
+  if(map[e.key]){ setColor(map[e.key]); return; }
+  if(e.key==='Escape'){ cancelWiring(); closePicker(); }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); }
+});
+function undo(){
+  if(G.wiring){ cancelWiring(); return; }
+  const h = G.history.pop(); if(!h){ toast('これ以上戻せません','err'); return; }
+  G.wires=h.wires; G.juncs=h.juncs; SFX.tap(); refresh();
+}
+document.getElementById('undoBtn').onclick = ()=>undo();
+document.getElementById('clearBtn').onclick = ()=>{ if(!G.wires.length && !G.juncs.length) return; pushHist(); G.wires=[]; G.juncs=[]; G.wiring=null; refresh(); toast('配線を全部撤去しました'); };
+document.getElementById('hintBtn').onclick = ()=>{
+  const st=G.st; if(G.hints >= st.hints.length){ toast('これ以上ヒントはありません','err'); return; }
+  G.hints++; SFX.tap();
+  const box=document.getElementById('hintBox'); box.classList.remove('hidden');
+  box.innerHTML = `<b>👷 親方のヒント</b><ol>${st.hints.slice(0,G.hints).map(h=>`<li>${h}</li>`).join('')}</ol>`;
+};
+document.getElementById('gBack').onclick = ()=>{ if(G && G.wires.length && !confirm('配線が消えます。ステージ選択に戻りますか？')) return; showScreen('select'); };
+
+/* スマホ用 下部バー・シート */
+const sideEl = document.getElementById('side'), backdrop = document.getElementById('sheetBackdrop');
+const isMobile = () => matchMedia('(max-width:900px), (max-height:520px)').matches;
+function openSheet(){ sideEl.classList.add('open'); backdrop.classList.add('open'); }
+function closeSheet(){ sideEl.classList.remove('open'); backdrop.classList.remove('open'); }
+backdrop.onclick = closeSheet;
+document.getElementById('sheetClose').onclick = closeSheet;
+document.getElementById('mMission').onclick = ()=>{ SFX.tap(); openSheet(); };
+document.getElementById('mUndo').onclick = ()=>undo();
+document.getElementById('mJudge').onclick = ()=>document.getElementById('judgeBtn').click();
+
+/* タイマー */
+const fmt = s => `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+setInterval(()=>{ if(G && document.getElementById('game').classList.contains('active')){ const sec=(Date.now()-G.start)/1000; const el=document.getElementById('gTime'); el.textContent=fmt(sec); el.style.color = sec>G.st.par?'#fbbf24':''; } }, 500);
+
+/* =====================================================
+   検査（採点）
+===================================================== */
+function grade(){
+  const st = G.st, swDevs = st.devices.filter(d=>DEV[d.type].states), n = swDevs.length;
+  const cache = {};
+  const evc = arr => { const k=arr.join(''); if(!cache[k]){ const s={}; swDevs.forEach((d,i)=>s[d.id]=arr[i]); cache[k]=evaluate(st, G.wires, s, true); } return cache[k]; };
+  const combos = []; for(let m=0; m<(1<<n); m++) combos.push(swDevs.map((d,i)=>(m>>i)&1));
+  const funcFails = new Set(); let okCount = 0;
+  combos.forEach(arr=>{
+    const ev = evc(arr), desc = swDevs.map((d,i)=>`${lab(d)}=${DEV[d.type].stateNames[arr[i]]}`).join('、'); let ok = true;
+    if(ev.short){ ok=false; funcFails.add(`【${desc}】のとき ショート（短絡）する`); }
+    else for(const [id,ex] of Object.entries(st.expect)){
+      const d=devById(id), lit=ev.lit[id];
+      if(ex==='always'){ if(!lit){ ok=false; funcFails.add(`【${desc}】のとき ${lab(d)} に電気が来ていない（常時通電のはず）`); } }
+      else if(ex.sw){ const i=swDevs.findIndex(s=>s.id===ex.sw), want=arr[i]===1; if(lit!==want){ ok=false; funcFails.add(`【${desc}】のとき ${lab(d)} が${want?'点灯しない':'消えない'}`); } }
+      else if(ex.toggle){ ex.toggle.forEach(sid=>{ const i=swDevs.findIndex(s=>s.id===sid), a2=arr.slice(); a2[i]^=1; const e2=evc(a2);
+          if(!e2.short && e2.lit[id]===lit){ ok=false; funcFails.add(`【${desc}】から ${lab(devById(sid))} を切り替えても ${lab(d)} が${lit?'点いたまま':'消えたまま'}`); } }); }
+    }
+    if(ok) okCount++;
+  });
+  const funcOK = okCount===combos.length;
+  const func = Math.round(40*okCount/combos.length);
+
+  // 静的チェック（スイッチを全部開放した状態の電位グループ）
+  const ev0 = evaluate(st, G.wires, {}, false), uf=ev0.uf, rL=ev0.rL, rN=ev0.rN;
+  const viol = []; const V=(cat,msg,why)=>viol.push({cat,msg,why});
+  if(!ev0.short){
+    let cN=0,cL=0,cG=0;
+    G.wires.forEach(w=>{ const r=uf.find(K(w.a));
+      if(r===rN && w.color!=='white') cN++; else if(r===rL && w.color!=='black') cL++; else if(r!==rN && r!==rL && w.color==='green') cG++; });
+    if(cN) V('color',`接地側（N）の電線が白になっていない（${cN}本）`,'接地側は必ず白。どの線が接地側か一目で分かるようにするための決まり。');
+    if(cL) V('color',`電源からスイッチ・コンセントまでの非接地側が黒になっていない（${cL}本）`,'電源Lから器具までは必ず黒。施工条件の定番。');
+    if(cG) V('color',`接地線でない所に緑を使っている（${cG}本）`,'緑は接地線（アース）専用の色。');
+    st.devices.forEach(d=>{
+      const def=DEV[d.type], used=def.pins.some(p=>epCount({t:'pin',dev:d.id,pin:p.id})>0);
+      if(def.polar && used && uf.find(`${d.id}.W`)!==rN) V('color',`${lab(d)} のW端子が接地側（白）に直結していない`,'受金ねじ側・W表示の端子は接地側。逆にすると電球交換時などに感電の危険がある。');
+      if(def.outlet && used && uf.find(`${d.id}.B`)!==rL) V('color',`${lab(d)} の非接地側が電源L（黒）に直結していない`,'コンセントはスイッチを通さず、いつでも使えるようにする。');
+      if(def.states && used && def.pins.some(p=>uf.find(`${d.id}.${p.id}`)===rN)) V('color',`${lab(d)} が接地側（N）に入っている`,'スイッチは非接地側に入れる。接地側で切ると、OFFでも器具に電圧が残り危険。');
+    });
+  }
+  G.wires.forEach(w=>{
+    if(w.a.t==='pin' && w.b.t==='pin'){
+      const da=devById(w.a.dev), db=devById(w.b.dev);
+      if(da.id===db.id) V('conn',`${lab(da)} の端子どうしを直結している`,'同じ器具の端子をつなぐと器具の意味がなくなる（スイッチなら常時ON、負荷ならショート）。');
+      else if(!da.group || da.group!==db.group) V('conn',`器具どうしを直接つないでいる（${lab(da)} → ${lab(db)}）`,'電線の接続はボックス内で行うのが原則。器具間の直結は同じ連用枠の渡り線だけ。');
+    }
+  });
+  const jinfo = [];
+  G.juncs.forEach(j=>{
+    const ws = juncWires(j.id); let n16=0,n20=0; ws.forEach(w=>wireSize(w)===2.0?n20++:n16++);
+    if(ws.length<2){ V('conn','電線が1本しかない接続点がある','つなぐ相手がいない接続点は不要。施工ミスのもと。'); return; }
+    const req = st.conn==='ring' ? sleeveFor(n16,n20) : (ws.length<=5 ? `差${ws.length}` : null);
+    const r = uf.find(`J${j.id}`); const grp = ev0.short?'':(r===rN?'N（接地側）':r===rL?'L（非接地側）':'返り線・トラベラー');
+    jinfo.push({desc:juncDesc(j.id), grp, req, kind:j.kind});
+    if(!req) V('conn',`${juncDesc(j.id)} は1つのスリーブ/コネクタでは接続できない`,'本数が多すぎる。電線の集め方（渡り線など）を見直そう。');
+    else if(!j.kind) V('conn',`圧着マーク／コネクタが未設定の接続点がある（${juncDesc(j.id)}）`,'接続点ごとに正しい接続材料を選ぶのも設計のうち。');
+    else if(j.kind!==req) V('conn',`${juncDesc(j.id)} → 正解「${req}」なのに「${j.kind}」`, st.conn==='ring' ? 'リングスリーブの刻印ミスは技能試験で一発欠陥。早見表で太さと本数を確認しよう。' : 'コネクタは接続する本数と同じ口数のものを使う。空きがあるのも足りないのもNG。');
+  });
+
+  const nColor = viol.filter(v=>v.cat==='color').length, nConn = viol.filter(v=>v.cat==='conn').length;
+  const color = Math.max(0, 20-7*nColor), conn = Math.max(0, 20-7*nConn);
+  const wc = G.wires.length, eff = wc<=st.optimal ? 10 : Math.max(0, 10-3*(wc-st.optimal));
+  const sec = (Date.now()-G.start)/1000, time = sec<=st.par ? 10 : Math.max(0, Math.round(10*(1-(sec-st.par)/(2*st.par))));
+  const total = Math.max(0, Math.min(100, func+color+conn+eff+time-5*G.hints));
+  const stars = !funcOK ? 0 : (viol.length===0 && total>=90 ? 3 : total>=75 ? 2 : 1);
+  return {funcOK, func, color, conn, eff, time, total, stars, funcFails:[...funcFails], viol, jinfo, wc, sec, nCombos:combos.length, okCount};
+}
+
+document.getElementById('judgeBtn').onclick = ()=>{
+  closeSheet();
+  if(G.wiring) cancelWiring();
+  if(!G.wires.length){ toast('まだ配線がありません','err'); return; }
+  showResult(grade());
+};
+
+function showResult(r){
+  const st = G.st, idx = G.idx;
+  const comment = r.stars===3 ? '完璧だ！もう現場を任せられるな！' : r.stars===2 ? 'いい腕だ。細かいところを詰めれば満点だぞ。' : r.stars===1 ? '動作はOK！だが検査員の指摘をよく読んでおけ。' : 'まだ思った通りに電気が流れてないぞ。お題と配線を見比べてみな。';
+  const xp = r.funcOK ? r.total : Math.round(r.total/3);
+  const prevStars = save.stars[st.id]||0;
+  if(r.funcOK){
+    save.stars[st.id] = Math.max(prevStars, r.stars);
+    save.best[st.id] = Math.max(save.best[st.id]||0, r.total);
+  }
+  persist(); addXP(xp);
+  const cat = (name,v,max)=>`<div class="cat"><span>${name}</span><div class="cbar"><div style="width:${v/max*100}%"></div></div><b>${v}/${max}</b></div>`;
+  const hasNext = idx < STAGES.length-1;
+  document.getElementById('resultBox').innerHTML = `
+    <div class="res-head ${r.funcOK?'ok':'ng'}">
+      <div class="res-stamp">${r.funcOK?'合格':'不合格'}</div>
+      <div class="res-stars">${[1,2,3].map(i=>`<span class="star ${i<=r.stars?'on':''}" style="animation-delay:${.3+i*.25}s">★</span>`).join('')}</div>
+      <div class="res-score"><b>${r.total}</b> 点</div>
+      <div class="res-comment">👷 ${comment}</div>
+    </div>
+    <div class="mbody">
+      <div class="cats">
+        ${cat('⚡ 動作',r.func,40)}${cat('🎨 極性・色',r.color,20)}${cat('🔗 接続・圧着',r.conn,20)}${cat('♻ 効率',r.eff,10)}${cat('⏱ タイム',r.time,10)}
+        ${G.hints?`<div class="cat"><span>💡 ヒント</span><div></div><b style="color:#f87171">−${G.hints*5}</b></div>`:''}
+      </div>
+      <div style="font-size:12.5px;color:var(--muted)">スイッチの全${r.nCombos}パターン中 ${r.okCount} パターン正常 ／ 電線 ${r.wc}本（目標 ${st.optimal}本以内） ／ タイム ${fmt(r.sec)}（目標 ${fmt(st.par)}）</div>
+      ${r.funcFails.length?`<h4>⚡ 通電テストで見つかった問題</h4>${r.funcFails.slice(0,5).map(f=>`<div class="issue f">${f}</div>`).join('')}${r.funcFails.length>5?`<div style="font-size:12px;color:var(--muted)">ほか ${r.funcFails.length-5} 件</div>`:''}`:''}
+      ${r.viol.length?`<h4>🔎 検査員の指摘</h4>${r.viol.map(v=>`<div class="issue">${v.msg}<small>なぜ？ → ${v.why}</small></div>`).join('')}`:''}
+      ${r.viol.length&&r.funcOK?'<div class="warnbox">⚠ 本番の技能試験では、この指摘は「欠陥」と判定され不合格になる可能性があります。</div>':''}
+      ${r.jinfo.length?`<h4>🔗 接続点チェック</h4><table class="tbl"><tr><th>グループ</th><th>電線</th><th>正解</th><th>あなた</th></tr>${r.jinfo.map(j=>`<tr><td>${j.grp}</td><td>${j.desc}</td><td class="mk">${j.req||'不可'}</td><td>${j.kind||'未設定'} ${j.kind&&j.kind===j.req?'<span class="ok-t">✓</span>':'<span class="ng-t">✗</span>'}</td></tr>`).join('')}</table>`:''}
+      <h4>🎓 設計ポイント</h4>
+      <div class="pointbox">${st.point}</div>
+      <div class="xpgain">+${xp} XP${r.funcOK&&!prevStars&&hasNext?'　🔓 次のステージ解放！':''}</div>
+    </div>
+    <div class="res-btns">
+      <button class="btn" id="rFix">🔧 配線を直す</button>
+      <button class="btn blue" id="rRetry">↻ 最初から</button>
+      ${r.funcOK&&hasNext?'<button class="btn green" id="rNext">次のステージ ▶</button>':''}
+      <button class="btn ghost" id="rSel">ステージ選択</button>
+    </div>`;
+  openModal('result');
+  if(r.funcOK){ SFX.fanfare(); if(r.stars>=2) confetti(); } else SFX.fail();
+  document.getElementById('rFix').onclick = ()=>closeModal('result');
+  document.getElementById('rRetry').onclick = ()=>{ closeModal('result'); startStage(idx); };
+  document.getElementById('rSel').onclick = ()=>{ closeModal('result'); showScreen('select'); };
+  const nb = document.getElementById('rNext'); if(nb) nb.onclick = ()=>{ closeModal('result'); startStage(idx+1); };
+}
+
+/* =====================================================
+   画面・モーダル・UI
+===================================================== */
+function showScreen(id){
+  if(id!=='dojo') stopDojo();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('active', s.id===id));
+  if(id==='home') renderHome();
+  if(id==='select') renderSelect();
+  if(id==='dojo') resetDojo();
+}
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click', ()=>{ ac(); SFX.tap(); showScreen(b.dataset.go); }));
+function openModal(n){ document.getElementById('m-'+n).classList.remove('hidden'); }
+function closeModal(n){ document.getElementById('m-'+n).classList.add('hidden'); }
+document.querySelectorAll('[data-modal]').forEach(b=>b.addEventListener('click', ()=>{ SFX.tap(); openModal(b.dataset.modal); }));
+document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click', e=>{ if(m.id!=='m-result' && (e.target===m || e.target.closest('[data-close]'))) m.classList.add('hidden'); }));
+
+function totalStars(){ return Object.values(save.stars).reduce((a,b)=>a+b,0); }
+function renderHome(){
+  const li = levelInfo(save.xp);
+  document.getElementById('hLv').textContent = li.lv;
+  document.getElementById('hTitle').textContent = titleFor(li.lv);
+  document.getElementById('hXp').style.width = (li.cur/li.need*100)+'%';
+  document.getElementById('hXpText').textContent = `次のレベルまで ${li.need-li.cur} XP（累計 ${save.xp} XP）`;
+  document.getElementById('hStars').textContent = totalStars();
+  document.getElementById('muteBtn').textContent = save.muted ? '🔇 音なし' : '🔊 音あり';
+}
+document.getElementById('muteBtn').onclick = ()=>{ save.muted=!save.muted; persist(); renderHome(); SFX.tap(); };
+
+function renderSelect(){
+  document.getElementById('sStars').textContent = totalStars();
+  document.getElementById('sStarsMax').textContent = STAGES.length*3;
+  document.getElementById('stageGrid').innerHTML = STAGES.map((st,i)=>{
+    const unlocked = i===0 || (save.stars[STAGES[i-1].id]||0)>0, s = save.stars[st.id]||0, best = save.best[st.id];
+    return `<button class="scard ${unlocked?'':'locked'}" data-stage="${i}">
+      <div class="sno">STAGE ${i+1}${i===STAGES.length-1?' 👑':''}</div><div class="sname">${st.title}</div><div class="ssub">${st.sub}</div>
+      <div class="stag">${st.conn==='ring'?'リングスリーブ':'差込コネクタ'}${st.powerSize===2?' / 2.0mm':''}</div>
+      <div class="sstars">${[1,2,3].map(k=>`<span class="${k<=s?'on':''}">★</span>`).join('')}</div>
+      ${best!=null?`<div class="sbest">BEST ${best}点</div>`:''}${unlocked?'':'<div class="lock">🔒</div>'}
+    </button>`;
+  }).join('');
+  document.querySelectorAll('.scard').forEach(c=>c.addEventListener('click', ()=>{
+    if(c.classList.contains('locked')){ SFX.err(); toast('前のステージをクリアすると解放されます','err'); return; }
+    ac(); SFX.tap(); startStage(+c.dataset.stage);
+  }));
+}
+
+function toast(msg, type){
+  const d = document.createElement('div'); d.className = 'tmsg' + (type ? ' '+type : ''); d.textContent = msg;
+  document.getElementById('toast').appendChild(d);
+  setTimeout(()=>{ d.style.transition='opacity .4s'; d.style.opacity='0'; setTimeout(()=>d.remove(),400); }, type==='lv'?3200:2200);
+}
+
+function confetti(){
+  const c = document.getElementById('fx'), ctx = c.getContext('2d'); c.width=innerWidth; c.height=innerHeight;
+  const cols = ['#facc15','#3b82f6','#ef4444','#22c55e','#ffffff'];
+  const P = Array.from({length:170}, ()=>({x:innerWidth/2, y:innerHeight/3, vx:(Math.random()-.5)*16, vy:-Math.random()*13-4, c:cols[Math.random()*5|0], s:Math.random()*7+4, r:Math.random()*6}));
+  let t=0; (function f(){ ctx.clearRect(0,0,c.width,c.height);
+    P.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=.33; p.vx*=.99; p.r+=.2; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.r); ctx.fillStyle=p.c; ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2); ctx.restore(); });
+    if(++t<170) requestAnimationFrame(f); else ctx.clearRect(0,0,c.width,c.height); })();
+}
+
+/* =====================================================
+   圧着マーク道場
+===================================================== */
+const DOJO_SET = [[2,0],[3,0],[4,0],[5,0],[6,0],[0,2],[0,3],[0,4],[1,1],[2,1],[3,1],[4,1],[5,1],[1,2],[2,2],[3,2]];
+let D = null;
+function resetDojo(){
+  document.getElementById('dBest').textContent = save.dojoBest;
+  ['dPlay','dEnd'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('dStart').classList.remove('hidden');
+}
+function stopDojo(){ if(D && D.timer){ clearInterval(D.timer); D.timer=null; } }
+document.getElementById('dojoBack').onclick = ()=>{ stopDojo(); showScreen('home'); };
+document.getElementById('dStartBtn').onclick = ()=>{
+  ac(); SFX.good();
+  D = {score:0, streak:0, time:45, lock:false, correct:0, total:0, last:-1, timer:null};
+  document.getElementById('dStart').classList.add('hidden');
+  document.getElementById('dPlay').classList.remove('hidden');
+  document.getElementById('dFb').textContent=''; updDojo(); nextQ();
+  D.timer = setInterval(()=>{ D.time--; updDojo(); if(D.time<=5 && D.time>0) tone(1000,.05,'square',.03); if(D.time<=0) endDojo(); }, 1000);
+};
+function updDojo(){
+  document.getElementById('dScore').textContent = D.score;
+  document.getElementById('dStreak').textContent = D.streak;
+  document.getElementById('dTime').textContent = Math.max(0,D.time);
+  document.getElementById('dTimeBar').style.width = Math.max(0,D.time/45*100)+'%';
+}
+function nextQ(){
+  let i; do{ i = Math.random()*DOJO_SET.length|0; }while(i===D.last); D.last=i;
+  const [a,b] = DOJO_SET[i]; D.q = {n16:a, n20:b, ans:sleeveFor(a,b)};
+  const ws = [...Array(b).fill(2), ...Array(a).fill(1.6)];
+  document.getElementById('dQ').innerHTML = `<div class="dwires">${ws.map((s,k)=>`<span class="cw ${s===2?'big':''}" style="animation-delay:${k*.04}s">${s===2?'2.0':'1.6'}</span>`).join('')}</div>
+    <div class="dtext">${a?`1.6mm × ${a}本`:''}${a&&b?' ＋ ':''}${b?`2.0mm × ${b}本`:''}</div><div class="dask">リングスリーブの圧着マークは？</div>`;
+}
+document.querySelectorAll('.dbtn').forEach(b=>b.addEventListener('click', ()=>{
+  if(!D || D.lock || D.time<=0) return;
+  const fb = document.getElementById('dFb'); D.total++;
+  if(b.dataset.a===D.q.ans){
+    D.streak++; D.correct++; const add = 10 + (D.streak-1)*2; D.score += add;
+    fb.className='dfb good'; fb.textContent = `⭕ 正解！ +${add}${D.streak>=3?`（🔥${D.streak}連続！）`:''}`;
+    tone(700+Math.min(D.streak,10)*60,.1,'triangle',.07); updDojo(); nextQ();
+  } else {
+    D.streak=0; D.time=Math.max(0,D.time-3); SFX.err();
+    fb.className='dfb bad'; fb.textContent = `❌ 正解は「${D.q.ans}」（−3秒）`;
+    D.lock=true; updDojo(); setTimeout(()=>{ if(!D) return; D.lock=false; if(D.time>0) nextQ(); }, 1200);
+  }
+}));
+function endDojo(){
+  stopDojo(); SFX.fanfare();
+  const isBest = D.score > save.dojoBest; if(isBest) save.dojoBest = D.score;
+  const xp = Math.round(D.score/2); persist(); addXP(xp);
+  document.getElementById('dPlay').classList.add('hidden');
+  const e = document.getElementById('dEnd'); e.classList.remove('hidden');
+  const rate = D.total ? Math.round(D.correct/D.total*100) : 0;
+  e.innerHTML = `<h3>⏰ タイムアップ！</h3>
+    <div style="font-size:48px;font-weight:900;color:#facc15">${D.score}<span style="font-size:18px">点</span></div>
+    ${isBest?'<div style="color:#4ade80;font-weight:900">🏆 ベスト更新！</div>':''}
+    <p>正解 ${D.correct} / ${D.total}（正答率 ${rate}%）　<b style="color:#4ade80">+${xp} XP</b></p>
+    <table class="tbl" style="margin-bottom:14px"><tr><th>マーク</th><th>1.6のみ</th><th>2.0のみ</th><th>混在</th></tr>
+      <tr><td class="mk">〇</td><td>2本</td><td>―</td><td>―</td></tr>
+      <tr><td class="mk">小</td><td>3〜4本</td><td>2本</td><td>2.0×1＋1.6×1〜2</td></tr>
+      <tr><td class="mk">中</td><td>5〜6本</td><td>3〜4本</td><td>2.0×1＋1.6×3〜5<br>2.0×2＋1.6×1〜3</td></tr></table>
+    <div style="display:flex;gap:8px"><button class="btn gold" style="flex:1" id="dAgain">もう一回</button><button class="btn ghost" style="flex:1" id="dHome">ホームへ</button></div>`;
+  document.getElementById('dBest').textContent = save.dojoBest;
+  document.getElementById('dAgain').onclick = ()=>document.getElementById('dStartBtn').click();
+  document.getElementById('dHome').onclick = ()=>showScreen('home');
+}
+
+/* 起動 */
+// オフライン対応（Service Worker）
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)){
+  window.addEventListener('load', ()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+// ホーム画面への追加
+let deferredPrompt = null;
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const installBtn = document.getElementById('installBtn');
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt=e; if(!isStandalone()) installBtn.classList.remove('hidden'); });
+window.addEventListener('appinstalled', ()=>{ installBtn.classList.add('hidden'); toast('📲 ホーム画面に追加しました！'); });
+if(isIOS && !isStandalone()) installBtn.classList.remove('hidden');
+installBtn.onclick = async ()=>{
+  if(deferredPrompt){ deferredPrompt.prompt(); try{ await deferredPrompt.userChoice; }catch(e){} deferredPrompt=null; installBtn.classList.add('hidden'); return; }
+  openModal('install');
+};
+renderHome();
+if(!save.seenHowto){ save.seenHowto = true; persist(); setTimeout(()=>openModal('howto'), 400); }
+window.addEventListener('resize', ()=>{ if(G && document.getElementById('game').classList.contains('active')) closePicker(); });
+</script>
+</body>
+</html>
